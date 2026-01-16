@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Férias Multi-Ano - Auchan Closer</title>
+    <title>Mapa de Férias - Auchan & Closer</title>
     <style>
         * {
             margin: 0;
@@ -136,7 +136,7 @@
         }
 
         .stat-label {
-            font-weight: bold;
+            font-weight: 600;
             color: #666;
             font-size: 13px;
         }
@@ -160,19 +160,21 @@
         .timeline-table {
             border-collapse: collapse;
             width: 100%;
-            font-size: 11px;
+            font-size: 10px;
         }
 
         .timeline-table th {
             background: linear-gradient(135deg, #1F4E78, #2d5a8c);
-            color: white;
-            padding: 12px 6px;
+            color: white !important;
+            padding: 8px 4px;
             text-align: center;
             font-weight: bold;
             position: sticky;
             top: 0;
             z-index: 20;
             border-right: 1px solid rgba(255,255,255,0.2);
+            line-height: 1.1;
+            height: 40px;
         }
 
         .timeline-table th:first-child {
@@ -180,35 +182,63 @@
             left: 0;
             z-index: 21;
             border-right: 2px solid rgba(255,255,255,0.3);
+            text-align: left;
+            padding-left: 12px;
+            font-size: 11px;
+        }
+
+        /* NOVO: Header com MÊS + DIA */
+        .day-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .month-abbr {
+            font-size: 7px;
+            margin-bottom: 1px;
+            opacity: 0.9;
+        }
+
+        .day-number {
+            font-size: 10px;
         }
 
         .timeline-table td {
             border-right: 1px solid #eee;
-            padding: 8px 3px;
+            padding: 4px 2px;
             text-align: center;
             cursor: pointer;
             user-select: none;
-            min-width: 35px;
-            height: 35px;
+            min-width: 38px;
+            height: 38px;
             transition: all 0.2s ease;
+            color: white !important;
+            font-weight: bold;
+            font-size: 11px;
         }
 
         .timeline-table td:hover {
             transform: scale(1.1);
             z-index: 10;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
         .timeline-table td:first-child {
             position: sticky;
             left: 0;
             background: linear-gradient(135deg, #4472C4, #5981d6) !important;
-            color: white;
+            color: white !important;
             font-weight: bold;
             z-index: 15;
             border-right: 3px solid #2d5aa6 !important;
             padding-left: 12px;
             text-align: left;
+            font-size: 12px;
         }
 
         .timeline-table tr:nth-child(even) td:first-child {
@@ -217,45 +247,43 @@
 
         .cell-empty {
             background: #ffffff;
+            color: #999 !important;
         }
 
+        /* FÉRIAS - TEXTO BRANCO */
         .cell-f {
             background: linear-gradient(135deg, #00B050, #009040) !important;
-            color: white;
-            font-weight: bold;
-            font-size: 12px !important;
+            color: white !important;
         }
 
         .cell-m {
             background: linear-gradient(135deg, #92D050, #7bb854) !important;
-            color: white;
-            font-weight: bold;
-            font-size: 12px !important;
+            color: white !important;
         }
 
         .cell-t {
             background: linear-gradient(135deg, #FFC000, #ffb300) !important;
-            color: #333;
-            font-weight: bold;
-            font-size: 12px !important;
+            color: white !important;
         }
 
-        .cell-holiday {
-            background: linear-gradient(135deg, #FF9999, #FF6B6B) !important;
-            color: white;
-            font-weight: bold;
-            font-size: 11px !important;
-            animation: pulse 2s infinite;
-        }
+               /* FERIADOS 2026 - TODOS COM TEXTO BRANCO */
+        .cell-feriado-ano-novo { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+        .cell-feriado-liberdade { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+        .cell-feriado-trabalhador { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+        .cell-feriado-portugal { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+        .cell-feriado-assuncao { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+        .cell-feriado-republica { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+        .cell-feriado-todos-santos { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+        .cell-feriado-restauracao { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+        .cell-feriado-imaculada { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+        .cell-feriado-natal { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+        .cell-feriado-sexta-santa { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+        .cell-feriado-pascoa { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+        .cell-feriado-corpus-christi { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
 
         .cell-weekend {
             background: linear-gradient(135deg, #f0f0f0, #e0e0e0) !important;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
+            color: #666 !important;
         }
 
         .resumo {
@@ -343,19 +371,20 @@
         .legend-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            gap: 15px;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
             gap: 12px;
+            font-size: 13px;
         }
 
         .legend-color {
-            width: 30px;
-            height: 30px;
-            border-radius: 6px;
+            width: 25px;
+            height: 25px;
+            border-radius: 5px;
             border: 2px solid #333;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
@@ -397,6 +426,7 @@
             margin-bottom: 25px;
             font-size: 16px;
             border-left: 5px solid #4472C4;
+            text-align: left;
         }
 
         .modal-buttons {
@@ -429,7 +459,7 @@
 
         .btn-t {
             background: linear-gradient(135deg, #FFC000, #ffb300);
-            color: #333;
+            color: white;
         }
 
         .btn-clear {
@@ -461,14 +491,23 @@
             .modal-buttons {
                 grid-template-columns: 1fr;
             }
+
+            .legend-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .timeline-table th {
+                padding: 6px 3px;
+                height: 36px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📅 Mapa de Férias Multi-Ano</h1>
-            <p>Time Line Interativo - Auchan Closer Team</p>
+            <h1>📅 Mapa de Férias</h1>
+            <p>Time Line Interativo - Auchan & Closer Team</p>
         </div>
 
         <div class="controls">
@@ -505,6 +544,7 @@
             <div class="legend">
                 <h3>🎨 Legenda</h3>
                 <div class="legend-grid">
+                    <!-- Férias -->
                     <div class="legend-item">
                         <span class="legend-color" style="background: linear-gradient(135deg, #00B050, #009040);"></span>
                         <strong>F</strong> = Dia Completo
@@ -517,10 +557,60 @@
                         <span class="legend-color" style="background: linear-gradient(135deg, #FFC000, #ffb300);"></span>
                         <strong>T</strong> = Meio-dia Tarde
                     </div>
+                    <!-- Feriados 2026 -->
                     <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #FF9999, #FF6B6B);"></span>
-                        <strong>🇵🇹</strong> = Feriados Nacionais
+                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
+                        🔴 Ano Novo (01/01)
                     </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
+                        🔴 Liberdade (25/04)
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
+                        🔴 Trabalhador (01/05)
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
+                        🔴 Portugal (10/06)
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
+                        🔴 Assunção (15/08)
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
+                        🔴 República (05/10)
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
+                        🔴 Todos Santos (01/11)
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
+                        🔴 Restauração (01/12)
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
+                        🔴 Imaculada (08/12)
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
+                        🔴 Natal (25/12)
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
+                        🔴 Sexta Santa (03/04)
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
+                        🔴 Páscoa (05/04)
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
+                        🔴 Corpus Christi (04/06)
+                    </div>
+                    <!-- Outros -->
                     <div class="legend-item">
                         <span class="legend-color" style="background: linear-gradient(135deg, #f0f0f0, #e0e0e0);"></span>
                         <strong>📅</strong> = Fins de Semana
@@ -529,7 +619,6 @@
             </div>
         </div>
     </div>
-
     <div class="modal" id="modal">
         <div class="modal-content">
             <h2>🎯 Marcar Férias</h2>
@@ -553,14 +642,30 @@
         let feriasAnteriores = {};
         let currentCell = null;
 
-        // Feriados nacionais Portugal
         function getFeriados(ano) {
+            if (ano === 2026) {
+                return [
+                    {data: '2026-01-01', nome: 'Ano Novo', classe: 'cell-feriado-ano-novo', emoji: '🔴'},
+                    {data: '2026-04-25', nome: 'Dia da Liberdade', classe: 'cell-feriado-liberdade', emoji: '🔷'},
+                    {data: '2026-05-01', nome: 'Dia do Trabalhador', classe: 'cell-feriado-trabalhador', emoji: '🟧'},
+                    {data: '2026-06-10', nome: 'Dia de Portugal', classe: 'cell-feriado-portugal', emoji: '🟢'},
+                    {data: '2026-08-15', nome: 'Assunção de Nossa Senhora', classe: 'cell-feriado-assuncao', emoji: '🟣'},
+                    {data: '2026-10-05', nome: 'Implantação da República', classe: 'cell-feriado-republica', emoji: '🟠'},
+                    {data: '2026-11-01', nome: 'Dia de Todos os Santos', classe: 'cell-feriado-todos-santos', emoji: '🔵'},
+                    {data: '2026-12-01', nome: 'Restauração da Independência', classe: 'cell-feriado-restauracao', emoji: '🔴'},
+                    {data: '2026-12-08', nome: 'Imaculada Conceição', classe: 'cell-feriado-imaculada', emoji: '🟦'},
+                    {data: '2026-12-25', nome: 'Natal', classe: 'cell-feriado-natal', emoji: '🔴'},
+                    {data: '2026-04-03', nome: 'Sexta-feira Santa', classe: 'cell-feriado-sexta-santa', emoji: '🟣'},
+                    {data: '2026-04-05', nome: 'Domingo de Páscoa', classe: 'cell-feriado-pascoa', emoji: '🟠'},
+                    {data: '2026-06-04', nome: 'Corpus Christi', classe: 'cell-feriado-corpus-christi', emoji: '🟢'}
+                ];
+            }
+            
             const fixos = [
                 {data: `01-01-${ano}`, nome: "Ano Novo"},
                 {data: `25-04-${ano}`, nome: "Liberdade"},
                 {data: `01-05-${ano}`, nome: "Trabalhador"},
                 {data: `10-06-${ano}`, nome: "Portugal"},
-                {data: `13-06-${ano}`, nome: "Santo António"},
                 {data: `15-08-${ano}`, nome: "Assunção"},
                 {data: `05-10-${ano}`, nome: "República"},
                 {data: `01-11-${ano}`, nome: "Todos os Santos"},
@@ -569,7 +674,6 @@
                 {data: `25-12-${ano}`, nome: "Natal"}
             ];
 
-            // Feriados variáveis (aproximação)
             const pascoa = new Date(ano, 3, 22 + Math.floor((5.5 + ano) % 19 * 11 + 3) % 30);
             const sextaSanta = new Date(pascoa);
             sextaSanta.setDate(pascoa.getDate() - 2);
@@ -582,10 +686,9 @@
                 {data: corpoDeus.toISOString().split('T')[0], nome: "Corpo de Deus"}
             );
 
-            return fixos;
+            return fixos.map(f => ({...f, classe: 'cell-holiday', emoji: '🇵🇹'}));
         }
 
-        // Inicializar
         function initData(ano) {
             const feriados = getFeriados(ano);
             currentYear = ano;
@@ -602,7 +705,6 @@
                 }
             });
 
-            // Carregar ferias anteriores
             loadFromStorage(ano);
             renderTimeline();
             updateResumo();
@@ -641,95 +743,104 @@
             localStorage.setItem(`feriasAnteriores_${ano}`, JSON.stringify(feriasAnteriores));
         }
 
-        function renderTimeline() {
-            const table = document.getElementById('timeline-table');
-            table.innerHTML = '';
+           function renderTimeline() {
+        const table = document.getElementById('timeline-table');
+        table.innerHTML = '';
 
-            const feriados = getFeriados(currentYear);
+        const feriados = getFeriados(currentYear);
 
-            // Header
-            const headerRow = document.createElement('tr');
-            const headerCell = document.createElement('th');
-            headerCell.textContent = 'Colaborador';
-            headerRow.appendChild(headerCell);
+        // Header (permanece igual)
+        const headerRow = document.createElement('tr');
+        const headerCell = document.createElement('th');
+        headerCell.textContent = 'Colaborador';
+        headerRow.appendChild(headerCell);
 
-            let date = new Date(currentYear, 0, 1);
-            let endDate = new Date(currentYear, 11, 31);
-            let mesAtual = '';
+        let date = new Date(currentYear, 0, 1);
+        let endDate = new Date(currentYear, 11, 31);
 
+        while (date <= endDate) {
+            const th = document.createElement('th');
+            const day = date.getDate();
+            const mes = date.toLocaleDateString('pt-PT', {month: 'short'}).toUpperCase();
+
+            const dayHeader = document.createElement('div');
+            dayHeader.className = 'day-header';
+            
+            const monthAbbr = document.createElement('div');
+            monthAbbr.className = 'month-abbr';
+            monthAbbr.textContent = mes;
+            
+            const dayNumber = document.createElement('div');
+            dayNumber.className = 'day-number';
+            dayNumber.textContent = day;
+
+            dayHeader.appendChild(monthAbbr);
+            dayHeader.appendChild(dayNumber);
+            th.appendChild(dayHeader);
+
+            th.title = date.toLocaleDateString('pt-PT');
+
+            const dateStr = date.toISOString().split('T')[0];
+            const feriado = feriados.find(f => f.data === dateStr);
+            if (feriado) {
+                th.title += `\n${feriado.emoji} ${feriado.nome}`;
+                th.className = feriado.classe;
+            } else if (date.getDay() === 0 || date.getDay() === 6) {
+                th.className = 'cell-weekend';
+            }
+
+            headerRow.appendChild(th);
+            date.setDate(date.getDate() + 1);
+        }
+        table.appendChild(headerRow);
+
+        // Dados - COM CORREÇÃO NO ONCLICK
+        colaboradores.forEach(colab => {
+            const row = document.createElement('tr');
+
+            const nameCell = document.createElement('td');
+            nameCell.textContent = colab;
+            row.appendChild(nameCell);
+
+            date = new Date(currentYear, 0, 1);
             while (date <= endDate) {
-                const th = document.createElement('th');
-                const day = date.getDate();
-                const mes = date.toLocaleDateString('pt-PT', {month: 'short'});
-
-                // Mostrar mês no dia 1 e 15
-                if (day === 1 || day === 15) {
-                    th.textContent = mes.toUpperCase() + '\n' + day;
-                    th.style.fontSize = '9px';
-                    th.style.lineHeight = '1.1';
-                } else {
-                    th.textContent = day;
-                }
-
-                th.title = date.toLocaleDateString('pt-PT');
-
-                // Feriados
                 const dateStr = date.toISOString().split('T')[0];
-                const feriado = feriados.find(f => f.data === dateStr);
-                if (feriado) {
-                    th.title += `\n🇵🇹 ${feriado.nome}`;
-                    th.className = 'cell-holiday';
-                } else if (date.getDay() === 0 || date.getDay() === 6) {
-                    th.className = 'cell-weekend';
+                const cell = document.createElement('td');
+                const value = dados[colab][dateStr] || '';
+
+                if (value === 'F') cell.className = 'cell-f';
+                else if (value === 'M') cell.className = 'cell-m';
+                else if (value === 'T') cell.className = 'cell-t';
+                else {
+                    const feriado = feriados.find(f => f.data === dateStr);
+                    if (feriado) {
+                        cell.className = feriado.classe;
+                        cell.title = `${feriado.emoji} ${feriado.nome}`;
+                    } else if (date.getDay() === 0 || date.getDay() === 6) {
+                        cell.className = 'cell-weekend';
+                    } else {
+                        cell.className = 'cell-empty';
+                    }
                 }
 
-                headerRow.appendChild(th);
+                cell.textContent = value || '';
+                
+                // CORREÇÃO AQUI: Usa new Date(dateStr) para data precisa
+                cell.onclick = function() {
+                    const cellDate = new Date(dateStr + 'T00:00:00');
+                    currentCell = {colab, dateStr};
+                    const feriado = feriados.find(f => f.data === dateStr);
+                    const info = `📅 ${cellDate.toLocaleDateString('pt-PT')} (${getDayName(cellDate.getDay())})<br>Colaborador: ${colab}<br>Valor atual: ${value || 'vazio'}<br>${feriado ? feriado.emoji + ' FERIADO: ' + feriado.nome : ''}`;
+                    document.getElementById('modal-info').innerHTML = info;
+                    document.getElementById('modal').style.display = 'flex';
+                };
+
+                row.appendChild(cell);
                 date.setDate(date.getDate() + 1);
             }
-            table.appendChild(headerRow);
-
-            // Dados
-            colaboradores.forEach(colab => {
-                const row = document.createElement('tr');
-
-                const nameCell = document.createElement('td');
-                nameCell.textContent = colab;
-                row.appendChild(nameCell);
-
-                date = new Date(currentYear, 0, 1);
-                while (date <= endDate) {
-                    const dateStr = date.toISOString().split('T')[0];
-                    const cell = document.createElement('td');
-                    const value = dados[colab][dateStr] || '';
-                    cell.textContent = value;
-
-                    if (value === 'F') cell.className = 'cell-f';
-                    else if (value === 'M') cell.className = 'cell-m';
-                    else if (value === 'T') cell.className = 'cell-t';
-                    else {
-                        const feriado = feriados.find(f => f.data === dateStr);
-                        if (feriado) cell.className = 'cell-holiday';
-                        else if (date.getDay() === 0 || date.getDay() === 6) cell.className = 'cell-weekend';
-                        else cell.className = 'cell-empty';
-                    }
-
-                    cell.onclick = function() {
-                        currentCell = {colab, dateStr};
-                        const feriado = feriados.find(f => f.data === dateStr);
-                        const info = `📅 ${date.toLocaleDateString('pt-PT')} (${getDayName(date.getDay())})
-Colaborador: ${colab}
-Valor atual: ${value || 'vazio'}
-${feriado ? '🇵🇹 FERIADO: ' + feriado.nome : ''}`;
-                        document.getElementById('modal-info').innerHTML = info;
-                        document.getElementById('modal').style.display = 'flex';
-                    };
-
-                    row.appendChild(cell);
-                    date.setDate(date.getDate() + 1);
-                }
-                table.appendChild(row);
-            });
-        }
+            table.appendChild(row);
+        });
+    }
 
         function updateResumo() {
             const table = document.getElementById('resumo-table');
@@ -770,7 +881,7 @@ ${feriado ? '🇵🇹 FERIADO: ' + feriado.nome : ''}`;
                     const td = document.createElement('td');
                     td.textContent = cell;
 
-                    if (idx === 1) { // Férias Ant. - editável
+                    if (idx === 1) {
                         td.className = 'cell-editable';
                         td.onclick = function() {
                             const novoValor = prompt('Férias Anteriores para ' + colab + ':', ferAnt);
@@ -837,7 +948,11 @@ ${feriado ? '🇵🇹 FERIADO: ' + feriado.nome : ''}`;
             return days[day];
         }
 
-        // Inicializar
+        function loadYear() {
+            const ano = parseInt(document.getElementById('year-select').value);
+            initData(ano);
+        }
+
         window.onload = function() {
             initData(2026);
 
