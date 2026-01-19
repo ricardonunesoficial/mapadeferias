@@ -181,13 +181,12 @@
             position: sticky;
             left: 0;
             z-index: 21;
-            border-right: 2px solid rgba(255,255,255,0.3);
+            border-right: 3px solid rgba(255,255,255,0.3);
             text-align: left;
             padding-left: 12px;
             font-size: 11px;
         }
 
-        /* Header com MÊS + DIA */
         .day-header {
             display: flex;
             flex-direction: column;
@@ -250,7 +249,6 @@
             color: #999 !important;
         }
 
-        /* FÉRIAS */
         .cell-f {
             background: linear-gradient(135deg, #00B050, #009040) !important;
             color: white !important;
@@ -266,7 +264,6 @@
             color: white !important;
         }
 
-        /* FERIADOS 2026 */
         .cell-feriado-ano-novo { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
         .cell-feriado-liberdade { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
         .cell-feriado-trabalhador { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
@@ -636,7 +633,7 @@
     </div>
 
     <script>
-        // URL do Apps Script Web App
+        // URL do Apps Script Web App - ATUALIZE COM A SUA URL
         const API_BASE = 'https://script.google.com/macros/s/AKfycbzv58FVjD4cMJ0MqJBZ2PBuHUyniRIDosFD6-ZDTRG1hEC-fzLFjJcpXIe3230AfsFe/exec';
 
         const colaboradores = ["João Coelho", "Newton Filho", "Ricardo Nunes", "Wallace Lindemberg"];
@@ -692,15 +689,29 @@
             return fixos.map(f => ({...f, classe: 'cell-holiday', emoji: '🇵🇹'}));
         }
 
-        // Carrega do Google Sheets
+        // Carrega do Google Sheets - VERSÃO CORRIGIDA
         async function loadFromStorage(ano) {
             try {
-                const res = await fetch(`${API_BASE}?ano=${ano}`);
-                if (!res.ok) throw new Error('Falha ao carregar do Sheets');
-                const payload = await res.json();
+                console.log('Iniciando loadFromStorage para o ano:', ano);
+                
+                const url = `${API_BASE}?ano=${ano}`;
+                console.log('URL da requisição:', url);
+                
+                const res = await fetch(url);
+                console.log('Resposta do servidor:', res.status, res.statusText);
+                
+                if (!res.ok) {
+                    throw new Error(`Erro HTTP: ${res.status} - ${res.statusText}`);
+                }
 
-                const loadedDados = payload.dados || {};
-                const loadedFeriasAnt = payload.feriasAnteriores || {};
+                const payload = await res.json();
+                console.log('Dados recebidos do servidor:', payload);
+
+                const loadedDados = payload.dados ? JSON.parse(payload.dados) : {};
+                const loadedFeriasAnt = payload.feriasAnteriores ? JSON.parse(payload.feriasAnteriores) : {};
+
+                console.log('Dados carregados:', loadedDados);
+                console.log('Férias anteriores carregadas:', loadedFeriasAnt);
 
                 // Inicializa estrutura base com dias vazios
                 dados = {};
@@ -729,8 +740,13 @@
                     feriasAnteriores[colab] = loadedFeriasAnt[colab] || 0;
                 });
 
+                console.log('Dados finais carregados com sucesso');
+                
             } catch (e) {
-                console.error('Erro ao carregar do servidor, inicializando em branco', e);
+                console.error('Erro detalhado ao carregar do servidor:', e);
+                console.log('Inicializando com dados vazios');
+                
+                // Inicialização com dados vazios
                 dados = {};
                 colaboradores.forEach(colab => {
                     dados[colab] = {};
@@ -749,20 +765,42 @@
             }
         }
 
-        // Grava no Google Sheets
+        // Grava no Google Sheets - VERSÃO CORRIGIDA
         async function saveToStorage(ano) {
             try {
-                await fetch(API_BASE, {
+                console.log('Iniciando saveToStorage para o ano:', ano);
+                
+                // Prepara os dados em formato mais simples
+                const dataToSend = {
+                    ano: ano,
+                    dados: JSON.stringify(dados),
+                    feriasAnteriores: JSON.stringify(feriasAnteriores)
+                };
+
+                console.log('Dados a enviar:', dataToSend);
+
+                const response = await fetch(API_BASE, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        ano,
-                        dados,
-                        feriasAnteriores
-                    })
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(dataToSend)
                 });
-            } catch (e) {
-                console.error('Erro ao gravar no servidor', e);
+
+                console.log('Resposta do servidor:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                console.log('Resultado do servidor:', result);
+                
+                return result;
+            } catch (error) {
+                console.error('Erro detalhado ao gravar no servidor:', error);
+                alert('Erro ao salvar dados: ' + error.message + '\nVerifique o console para mais detalhes.');
+                throw error;
             }
         }
 
