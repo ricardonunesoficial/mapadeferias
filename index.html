@@ -1,1071 +1,910 @@
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Férias - Auchan & Closer</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 100%;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #1F4E78 0%, #2d5a8c 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header p {
-            font-size: 16px;
-            opacity: 0.9;
-        }
-
-        .controls {
-            padding: 25px;
-            background: #f8f9fa;
-            border-bottom: 2px solid #e0e0e0;
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .year-selector {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .year-selector label {
-            font-weight: bold;
-            color: #333;
-        }
-
-        select {
-            padding: 10px 15px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            background: white;
-            cursor: pointer;
-            min-width: 100px;
-        }
-
-        select:focus {
-            outline: none;
-            border-color: #4472C4;
-            box-shadow: 0 0 0 3px rgba(68, 114, 196, 0.1);
-        }
-
-        .btn {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #00B050, #009040);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 176, 80, 0.4);
-        }
-
-        .btn-export {
-            background: linear-gradient(135deg, #4472C4, #2d5aa6);
-            color: white;
-        }
-
-        .btn-export:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(68, 114, 196, 0.4);
-        }
-
-        .btn-clear {
-            background: linear-gradient(135deg, #FF6B6B, #EE5A52);
-            color: white;
-        }
-
-        .stats {
-            display: flex;
-            gap: 20px;
-            margin-left: auto;
-            flex-wrap: wrap;
-        }
-
-        .stat-item {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            padding: 8px 15px;
-            background: white;
-            border-radius: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .stat-label {
-            font-weight: 600;
-            color: #666;
-            font-size: 13px;
-        }
-
-        .stat-value {
-            background: linear-gradient(135deg, #00B050, #009040);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 15px;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .timeline-wrapper {
-            overflow-x: auto;
-            overflow-y: auto;
-            max-height: 70vh;
-            border-bottom: 2px solid #e0e0e0;
-        }
-
-        .timeline-table {
-            border-collapse: collapse;
-            width: 100%;
-            font-size: 10px;
-        }
-
-        .timeline-table th {
-            background: linear-gradient(135deg, #1F4E78, #2d5a8c);
-            color: white !important;
-            padding: 8px 4px;
-            text-align: center;
-            font-weight: bold;
-            position: sticky;
-            top: 0;
-            z-index: 20;
-            border-right: 1px solid rgba(255,255,255,0.2);
-            line-height: 1.1;
-            height: 40px;
-        }
-
-        .timeline-table th:first-child {
-            position: sticky;
-            left: 0;
-            z-index: 21;
-            border-right: 3px solid rgba(255,255,255,0.3);
-            text-align: left;
-            padding-left: 12px;
-            font-size: 11px;
-        }
-
-        .day-header {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 8px;
-            font-weight: bold;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-        }
-
-        .month-abbr {
-            font-size: 7px;
-            margin-bottom: 1px;
-            opacity: 0.9;
-        }
-
-        .day-number {
-            font-size: 10px;
-        }
-
-        .timeline-table td {
-            border-right: 1px solid #eee;
-            padding: 4px 2px;
-            text-align: center;
-            cursor: pointer;
-            user-select: none;
-            min-width: 38px;
-            height: 38px;
-            transition: all 0.2s ease;
-            color: white !important;
-            font-weight: bold;
-            font-size: 11px;
-        }
-
-        .timeline-table td:hover {
-            transform: scale(1.1);
-            z-index: 10;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        }
-
-        .timeline-table td:first-child {
-            position: sticky;
-            left: 0;
-            background: linear-gradient(135deg, #4472C4, #5981d6) !important;
-            color: white !important;
-            font-weight: bold;
-            z-index: 15;
-            border-right: 3px solid #2d5aa6 !important;
-            padding-left: 12px;
-            text-align: left;
-            font-size: 12px;
-        }
-
-        .timeline-table tr:nth-child(even) td:first-child {
-            background: linear-gradient(135deg, #5981d6, #4472C4) !important;
-        }
-
-        .cell-empty {
-            background: #ffffff;
-            color: #999 !important;
-        }
-
-        .cell-f {
-            background: linear-gradient(135deg, #00B050, #009040) !important;
-            color: white !important;
-        }
-
-        .cell-m {
-            background: linear-gradient(135deg, #92D050, #7bb854) !important;
-            color: white !important;
-        }
-
-        .cell-t {
-            background: linear-gradient(135deg, #FFC000, #ffb300) !important;
-            color: white !important;
-        }
-
-        .cell-feriado-ano-novo { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
-        .cell-feriado-liberdade { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
-        .cell-feriado-trabalhador { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
-        .cell-feriado-portugal { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
-        .cell-feriado-assuncao { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
-        .cell-feriado-republica { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
-        .cell-feriado-todos-santos { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
-        .cell-feriado-restauracao { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
-        .cell-feriado-imaculada { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
-        .cell-feriado-natal { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
-        .cell-feriado-sexta-santa { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
-        .cell-feriado-pascoa { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
-        .cell-feriado-corpus-christi { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
-
-        .cell-weekend {
-            background: linear-gradient(135deg, #f0f0f0, #e0e0e0) !important;
-            color: #666 !important;
-        }
-
-        .resumo {
-            padding: 30px;
-            background: #f8f9fa;
-        }
-
-        .resumo h2 {
-            background: linear-gradient(135deg, #4472C4, #2d5aa6);
-            color: white;
-            padding: 20px;
-            margin-bottom: 25px;
-            border-radius: 10px;
-            text-align: center;
-            font-size: 24px;
-        }
-
-        .resumo-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 25px;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-        }
-
-        .resumo-table th {
-            background: linear-gradient(135deg, #4472C4, #2d5aa6);
-            color: white;
-            padding: 15px;
-            text-align: left;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .resumo-table td {
-            border-bottom: 1px solid #eee;
-            padding: 15px;
-            text-align: center;
-            font-size: 16px;
-        }
-
-        .resumo-table tr:nth-child(even) {
-            background: #ffffff;
-        }
-
-        .resumo-table tr:hover {
-            background: #e8f4f8;
-        }
-
-        .resumo-table td:first-child {
-            text-align: left;
-            font-weight: bold;
-            color: #1F4E78;
-            font-size: 15px;
-        }
-
-        .cell-calc {
-            background: linear-gradient(135deg, #E7E6E6, #d0d0d0) !important;
-            font-weight: bold;
-        }
-
-        .cell-editable {
-            background: linear-gradient(135deg, #FFF2CC, #FFE599) !important;
-            cursor: pointer;
-            font-weight: bold;
-            border: 2px solid #FFC000 !important;
-        }
-
-        .legend {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            border: 2px solid #e0e0e0;
-            margin-top: 25px;
-        }
-
-        .legend h3 {
-            margin-bottom: 20px;
-            color: #1F4E78;
-            font-size: 20px;
-            text-align: center;
-        }
-
-        .legend-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 13px;
-        }
-
-        .legend-color {
-            width: 25px;
-            height: 25px;
-            border-radius: 5px;
-            border: 2px solid #333;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-content {
-            background: linear-gradient(135deg, white 0%, #f8f9fa 100%);
-            padding: 40px;
-            border-radius: 20px;
-            text-align: center;
-            max-width: 450px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .modal-content h2 {
-            margin-bottom: 15px;
-            color: #1F4E78;
-            font-size: 24px;
-        }
-
-        .modal-info {
-            background: #e8f4f8;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            font-size: 16px;
-            border-left: 5px solid #4472C4;
-            text-align: left;
-        }
-
-        .modal-buttons {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 25px;
-        }
-
-        .modal-buttons button {
-            padding: 15px 20px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-        }
-
-        .btn-f {
-            background: linear-gradient(135deg, #00B050, #009040);
-            color: white;
-        }
-
-        .btn-m {
-            background: linear-gradient(135deg, #92D050, #7bb854);
-            color: white;
-        }
-
-        .btn-t {
-            background: linear-gradient(135deg, #FFC000, #ffb300);
-            color: white;
-        }
-
-        .btn-clear {
-            background: linear-gradient(135deg, #FF6B6B, #EE5A52);
-            color: white;
-        }
-
-        .btn-cancel {
-            background: #999;
-            color: white;
-        }
-
-        .btn-f:hover, .btn-m:hover, .btn-t:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        }
-
-        @media (max-width: 768px) {
-            .controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .stats {
-                margin-left: 0;
-                justify-content: center;
-            }
-
-            .modal-buttons {
-                grid-template-columns: 1fr;
-            }
-
-            .legend-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .timeline-table th {
-                padding: 6px 3px;
-                height: 36px;
-            }
-        }
-        /* ... Todo o CSS anterior permanece inalterado ... */
-
-        /* NOVAS REGRAS para dia da semana embaixo */
-        .weekday-bottom {
-            font-size: 6px !important;
-            opacity: 0.85;
-            line-height: 1;
-            margin-top: 0.5px;
-            font-weight: 600;
-            text-shadow: 0 0.5px 1px rgba(0,0,0,0.4);
-        }
-
-        .timeline-table th {
-            height: 42px; /* Aumentado para acomodar dia da semana */
-        }
-
-        @media (max-width: 768px) {
-            .timeline-table th {
-                height: 38px;
-            }
-            .weekday-bottom {
-                font-size: 5.5px !important;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa de Férias - Auchan & Closer</title>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 100%;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #1F4E78 0%, #2d5a8c 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .header p { font-size: 16px; opacity: 0.9; }
+
+    .controls {
+      padding: 25px;
+      background: #f8f9fa;
+      border-bottom: 2px solid #e0e0e0;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .year-selector { display: flex; gap: 10px; align-items: center; }
+
+    .year-selector label { font-weight: bold; color: #333; }
+
+    select {
+      padding: 10px 15px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      background: white;
+      cursor: pointer;
+      min-width: 100px;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #4472C4;
+      box-shadow: 0 0 0 3px rgba(68, 114, 196, 0.1);
+    }
+
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primary { background: linear-gradient(135deg, #00B050, #009040); color: white; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0, 176, 80, 0.4); }
+
+    .btn-export { background: linear-gradient(135deg, #4472C4, #2d5aa6); color: white; }
+    .btn-export:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(68, 114, 196, 0.4); }
+
+    .btn-clear { background: linear-gradient(135deg, #FF6B6B, #EE5A52); color: white; }
+
+    .stats { display: flex; gap: 20px; margin-left: auto; flex-wrap: wrap; }
+
+    .stat-item {
+      display: flex; gap: 8px; align-items: center;
+      padding: 8px 15px; background: white; border-radius: 25px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .stat-label { font-weight: 600; color: #666; font-size: 13px; }
+    .stat-value {
+      background: linear-gradient(135deg, #00B050, #009040);
+      color: white; padding: 6px 12px; border-radius: 15px;
+      font-weight: bold; font-size: 14px;
+    }
+
+    .timeline-wrapper {
+      overflow-x: auto;
+      overflow-y: auto;
+      max-height: 70vh;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .timeline-table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 10px;
+    }
+
+    .timeline-table th {
+      background: linear-gradient(135deg, #1F4E78, #2d5a8c);
+      color: white !important;
+      padding: 8px 4px;
+      text-align: center;
+      font-weight: bold;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-right: 1px solid rgba(255,255,255,0.2);
+      line-height: 1.1;
+      height: 42px; /* espaço p/ 3 linhas (mês, dia, semana) */
+    }
+
+    .timeline-table th:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 21;
+      border-right: 3px solid rgba(255,255,255,0.3);
+      text-align: left;
+      padding-left: 12px;
+      font-size: 11px;
+    }
+
+    .day-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 8px;
+      font-weight: bold;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .month-abbr { font-size: 7px; margin-bottom: 1px; opacity: 0.9; }
+    .day-number { font-size: 10px; }
+
+    .weekday-bottom {
+      font-size: 6px !important;
+      opacity: 0.85;
+      line-height: 1;
+      margin-top: 0.5px;
+      font-weight: 600;
+      text-shadow: 0 0.5px 1px rgba(0,0,0,0.4);
+    }
+
+    .timeline-table td {
+      border-right: 1px solid #eee;
+      padding: 4px 2px;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      min-width: 38px;
+      height: 38px;
+      transition: all 0.2s ease;
+      color: white !important;
+      font-weight: bold;
+      font-size: 11px;
+    }
+
+    .timeline-table td:hover {
+      transform: scale(1.1);
+      z-index: 10;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .timeline-table td:first-child {
+      position: sticky;
+      left: 0;
+      background: linear-gradient(135deg, #4472C4, #5981d6) !important;
+      color: white !important;
+      font-weight: bold;
+      z-index: 15;
+      border-right: 3px solid #2d5aa6 !important;
+      padding-left: 12px;
+      text-align: left;
+      font-size: 12px;
+    }
+
+    .timeline-table tr:nth-child(even) td:first-child {
+      background: linear-gradient(135deg, #5981d6, #4472C4) !important;
+    }
+
+    .cell-empty { background: #ffffff; color: #999 !important; }
+    .cell-f { background: linear-gradient(135deg, #00B050, #009040) !important; color: white !important; }
+    .cell-m { background: linear-gradient(135deg, #92D050, #7bb854) !important; color: white !important; }
+    .cell-t { background: linear-gradient(135deg, #FFC000, #ffb300) !important; color: white !important; }
+
+    /* Feriados (2026) */
+    .cell-feriado-ano-novo { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+    .cell-feriado-liberdade { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+    .cell-feriado-trabalhador { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+    .cell-feriado-portugal { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+    .cell-feriado-assuncao { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+    .cell-feriado-republica { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+    .cell-feriado-todos-santos { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+    .cell-feriado-restauracao { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+    .cell-feriado-imaculada { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+    .cell-feriado-natal { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+    .cell-feriado-sexta-santa { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+    .cell-feriado-pascoa { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+    .cell-feriado-corpus-christi { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+
+    /* Feriado genérico (para anos != 2026) */
+    .cell-holiday { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
+
+    .cell-weekend {
+      background: linear-gradient(135deg, #f0f0f0, #e0e0e0) !important;
+      color: #666 !important;
+    }
+
+    .resumo { padding: 30px; background: #f8f9fa; }
+
+    .resumo h2 {
+      background: linear-gradient(135deg, #4472C4, #2d5aa6);
+      color: white;
+      padding: 20px;
+      margin-bottom: 25px;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 24px;
+    }
+
+    .resumo-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 25px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    .resumo-table th {
+      background: linear-gradient(135deg, #4472C4, #2d5aa6);
+      color: white;
+      padding: 15px;
+      text-align: left;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .resumo-table td {
+      border-bottom: 1px solid #eee;
+      padding: 15px;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .resumo-table tr:nth-child(even) { background: #ffffff; }
+    .resumo-table tr:hover { background: #e8f4f8; }
+
+    .resumo-table td:first-child {
+      text-align: left;
+      font-weight: bold;
+      color: #1F4E78;
+      font-size: 15px;
+    }
+
+    .cell-calc {
+      background: linear-gradient(135deg, #E7E6E6, #d0d0d0) !important;
+      font-weight: bold;
+    }
+
+    .cell-editable {
+      background: linear-gradient(135deg, #FFF2CC, #FFE599) !important;
+      cursor: pointer;
+      font-weight: bold;
+      border: 2px solid #FFC000 !important;
+    }
+
+    .legend {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      border: 2px solid #e0e0e0;
+      margin-top: 25px;
+    }
+
+    .legend h3 {
+      margin-bottom: 20px;
+      color: #1F4E78;
+      font-size: 20px;
+      text-align: center;
+    }
+
+    .legend-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .legend-color {
+      width: 25px;
+      height: 25px;
+      border-radius: 5px;
+      border: 2px solid #333;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, white 0%, #f8f9fa 100%);
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      max-width: 450px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .modal-content h2 {
+      margin-bottom: 15px;
+      color: #1F4E78;
+      font-size: 24px;
+    }
+
+    .modal-info {
+      background: #e8f4f8;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 25px;
+      font-size: 16px;
+      border-left: 5px solid #4472C4;
+      text-align: left;
+    }
+
+    .modal-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-top: 25px;
+    }
+
+    .modal-buttons button {
+      padding: 15px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+    }
+
+    .btn-f { background: linear-gradient(135deg, #00B050, #009040); color: white; }
+    .btn-m { background: linear-gradient(135deg, #92D050, #7bb854); color: white; }
+    .btn-t { background: linear-gradient(135deg, #FFC000, #ffb300); color: white; }
+    .btn-clear { background: linear-gradient(135deg, #FF6B6B, #EE5A52); color: white; }
+    .btn-cancel { background: #999; color: white; }
+
+    .btn-f:hover, .btn-m:hover, .btn-t:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+
+    @media (max-width: 768px) {
+      .controls { flex-direction: column; align-items: stretch; }
+      .stats { margin-left: 0; justify-content: center; }
+      .modal-buttons { grid-template-columns: 1fr; }
+      .legend-grid { grid-template-columns: 1fr; }
+      .timeline-table th { padding: 6px 3px; height: 38px; }
+      .weekday-bottom { font-size: 5.5px !important; }
+    }
+  </style>
 </head>
+
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📅 Mapa de Férias</h1>
-            <p>Time Line Interativo - Auchan & Closer Team</p>
-        </div>
-
-        <div class="controls">
-            <div class="year-selector">
-                <label>📅 Ano:</label>
-                <select id="year-select">
-                    <option value="2026">2026</option>
-                    <option value="2027">2027</option>
-                    <option value="2028">2028</option>
-                    <option value="2029">2029</option>
-                    <option value="2030">2030</option>
-                </select>
-            </div>
-            <button class="btn btn-primary" onclick="loadYear()">🔄 Carregar Ano</button>
-            <button class="btn btn-export" onclick="exportToCSV()">📥 Exportar CSV</button>
-            <button class="btn btn-clear" onclick="clearAll()">🗑️ Limpar Tudo</button>
-
-            <div class="stats">
-                <div class="stat-item">
-                    <span class="stat-label">Total Dias:</span>
-                    <span class="stat-value" id="total-marcados">0</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="timeline-wrapper">
-            <table class="timeline-table" id="timeline-table"></table>
-        </div>
-
-        <div class="resumo">
-            <h2>📊 Resumo Automático</h2>
-            <table class="resumo-table" id="resumo-table"></table>
-
-            <div class="legend">
-                <h3>🎨 Legenda</h3>
-                <div class="legend-grid">
-                    <!-- Férias -->
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #00B050, #009040);"></span>
-                        <strong>F</strong> = Dia Completo
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #92D050, #7bb854);"></span>
-                        <strong>M</strong> = Meio-dia Manhã
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #FFC000, #ffb300);"></span>
-                        <strong>T</strong> = Meio-dia Tarde
-                    </div>
-                    <!-- Feriados 2026 -->
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
-                        🔴 Ano Novo (01/01)
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
-                        🔴 Liberdade (25/04)
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
-                        🔴 Trabalhador (01/05)
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
-                        🔴 Portugal (10/06)
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
-                        🔴 Assunção (15/08)
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
-                        🔴 República (05/10)
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
-                        🔴 Todos Santos (01/11)
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
-                        🔴 Restauração (01/12)
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
-                        🔴 Imaculada (08/12)
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
-                        🔴 Natal (25/12)
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
-                        🔴 Sexta Santa (03/04)
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
-                        🔴 Páscoa (05/04)
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
-                        🔴 Corpus Christi (04/06)
-                    </div>
-                    <!-- Outros -->
-                    <div class="legend-item">
-                        <span class="legend-color" style="background: linear-gradient(135deg, #f0f0f0, #e0e0e0);"></span>
-                        <strong>📅</strong> = Fins de Semana
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="modal" id="modal">
-        <div class="modal-content">
-            <h2>🎯 Marcar Férias</h2>
-            <div class="modal-info" id="modal-info">
-                Clique numa opção abaixo
-            </div>
-            <div class="modal-buttons">
-                <button class="btn-f" onclick="setCell('F')">📆 F Completo</button>
-                <button class="btn-m" onclick="setCell('M')">☀️ M Manhã</button>
-                <button class="btn-t" onclick="setCell('T')">🌅 T Tarde</button>
-                <button class="btn-clear" onclick="setCell('')">✨ Limpar</button>
-                <button class="btn-cancel" onclick="closeModal()">❌ Cancelar</button>
-            </div>
-        </div>
+  <div class="container">
+    <div class="header">
+      <h1>📅 Mapa de Férias</h1>
+      <p>Time Line Interativo - Auchan & Closer Team</p>
     </div>
 
-    <script>
-        // URL do Apps Script Web App - ATUALIZE COM A SUA URL
-        const API_BASE = 'https://script.google.com/macros/s/AKfycbzv58FVjD4cMJ0MqJBZ2PBuHUyniRIDosFD6-ZDTRG1hEC-fzLFjJcpXIe3230AfsFe/exec';
+    <div class="controls">
+      <div class="year-selector">
+        <label>📅 Ano:</label>
+        <select id="year-select">
+          <option value="2026">2026</option>
+          <option value="2027">2027</option>
+          <option value="2028">2028</option>
+          <option value="2029">2029</option>
+          <option value="2030">2030</option>
+        </select>
+      </div>
 
-        const colaboradores = ["João Coelho", "Newton Filho", "Ricardo Nunes", "Wallace Lindemberg"];
-        let currentYear = 2026;
-        let dados = {};
-        let feriasAnteriores = {};
-        let currentCell = null;
+      <button class="btn btn-primary" onclick="loadYear()">🔄 Carregar Ano</button>
+      <button class="btn btn-export" onclick="exportToCSV()">📥 Exportar CSV</button>
+      <button class="btn btn-clear" onclick="clearAll()">🗑️ Limpar Tudo</button>
 
-        function getFeriados(ano) {
-            if (ano === 2026) {
-                return [
-                    {data: '2026-01-01', nome: 'Ano Novo', classe: 'cell-feriado-ano-novo', emoji: '🔴'},
-                    {data: '2026-04-25', nome: 'Dia da Liberdade', classe: 'cell-feriado-liberdade', emoji: '🔷'},
-                    {data: '2026-05-01', nome: 'Dia do Trabalhador', classe: 'cell-feriado-trabalhador', emoji: '🟧'},
-                    {data: '2026-06-10', nome: 'Dia de Portugal', classe: 'cell-feriado-portugal', emoji: '🟢'},
-                    {data: '2026-08-15', nome: 'Assunção de Nossa Senhora', classe: 'cell-feriado-assuncao', emoji: '🟣'},
-                    {data: '2026-10-05', nome: 'Implantação da República', classe: 'cell-feriado-republica', emoji: '🟠'},
-                    {data: '2026-11-01', nome: 'Dia de Todos os Santos', classe: 'cell-feriado-todos-santos', emoji: '🔵'},
-                    {data: '2026-12-01', nome: 'Restauração da Independência', classe: 'cell-feriado-restauracao', emoji: '🔴'},
-                    {data: '2026-12-08', nome: 'Imaculada Conceição', classe: 'cell-feriado-imaculada', emoji: '🟦'},
-                    {data: '2026-12-25', nome: 'Natal', classe: 'cell-feriado-natal', emoji: '🔴'},
-                    {data: '2026-04-03', nome: 'Sexta-feira Santa', classe: 'cell-feriado-sexta-santa', emoji: '🟣'},
-                    {data: '2026-04-05', nome: 'Domingo de Páscoa', classe: 'cell-feriado-pascoa', emoji: '🟠'},
-                    {data: '2026-06-04', nome: 'Corpus Christi', classe: 'cell-feriado-corpus-christi', emoji: '🟢'}
-                ];
+      <div class="stats">
+        <div class="stat-item">
+          <span class="stat-label">Total Dias:</span>
+          <span class="stat-value" id="total-marcados">0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline-wrapper">
+      <table class="timeline-table" id="timeline-table"></table>
+    </div>
+
+    <div class="resumo">
+      <h2>📊 Resumo Automático</h2>
+      <table class="resumo-table" id="resumo-table"></table>
+
+      <div class="legend">
+        <h3>🎨 Legenda</h3>
+        <div class="legend-grid">
+          <div class="legend-item">
+            <span class="legend-color" style="background: linear-gradient(135deg, #00B050, #009040);"></span>
+            <strong>F</strong> = Dia Completo
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: linear-gradient(135deg, #92D050, #7bb854);"></span>
+            <strong>M</strong> = Meio-dia Manhã
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: linear-gradient(135deg, #FFC000, #ffb300);"></span>
+            <strong>T</strong> = Meio-dia Tarde
+          </div>
+
+          <div class="legend-item">
+            <span class="legend-color" style="background: linear-gradient(135deg, #DC143C, #B22222);"></span>
+            🔴 Feriados
+          </div>
+          <div class="legend-item">
+            <span class="legend-color" style="background: linear-gradient(135deg, #f0f0f0, #e0e0e0);"></span>
+            <strong>📅</strong> = Fins de Semana
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h2>🎯 Marcar Férias</h2>
+      <div class="modal-info" id="modal-info">Clique numa opção abaixo</div>
+      <div class="modal-buttons">
+        <button class="btn-f" onclick="setCell('F')">📆 F Completo</button>
+        <button class="btn-m" onclick="setCell('M')">☀️ M Manhã</button>
+        <button class="btn-t" onclick="setCell('T')">🌅 T Tarde</button>
+        <button class="btn-clear" onclick="setCell('')">✨ Limpar</button>
+        <button class="btn-cancel" onclick="closeModal()">❌ Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ATUALIZA com a tua URL /exec
+    const API_BASE = 'https://script.google.com/macros/s/AKfycbyHsvtype8Pqf6XISIa30DfPyKENrRjnOwb6nV10e_17u9fFXx1ZBoAV2fnMpUktvE81w/exec';
+
+    const colaboradores = ["João Coelho", "Newton Filho", "Ricardo Nunes", "Wallace Lindemberg"];
+
+    let currentYear = 2026;
+    let dados = {};
+    let feriasAnteriores = {};
+    let currentCell = null;
+
+    // ---------------------------
+    // Helpers API (GET + action)
+    // ---------------------------
+    async function apiCall(paramsObj) {
+      const qs = new URLSearchParams();
+      Object.entries(paramsObj).forEach(([k, v]) => qs.set(k, String(v)));
+
+      const url = `${API_BASE}?${qs.toString()}`;
+      const res = await fetch(url, { method: 'GET' });
+
+      if (!res.ok) throw new Error(`Erro HTTP: ${res.status} - ${res.statusText}`);
+
+      const payload = await res.json();
+      if (payload && payload.success === false) {
+        throw new Error(payload.error || 'Erro desconhecido no Apps Script');
+      }
+      return payload;
+    }
+
+    // ---------------------------
+    // Feriados
+    // ---------------------------
+    function getFeriados(ano) {
+      if (ano === 2026) {
+        return [
+          {data: '2026-01-01', nome: 'Ano Novo', classe: 'cell-feriado-ano-novo', emoji: '🔴'},
+          {data: '2026-04-25', nome: 'Dia da Liberdade', classe: 'cell-feriado-liberdade', emoji: '🔴'},
+          {data: '2026-05-01', nome: 'Dia do Trabalhador', classe: 'cell-feriado-trabalhador', emoji: '🔴'},
+          {data: '2026-06-10', nome: 'Dia de Portugal', classe: 'cell-feriado-portugal', emoji: '🔴'},
+          {data: '2026-08-15', nome: 'Assunção de Nossa Senhora', classe: 'cell-feriado-assuncao', emoji: '🔴'},
+          {data: '2026-10-05', nome: 'Implantação da República', classe: 'cell-feriado-republica', emoji: '🔴'},
+          {data: '2026-11-01', nome: 'Dia de Todos os Santos', classe: 'cell-feriado-todos-santos', emoji: '🔴'},
+          {data: '2026-12-01', nome: 'Restauração da Independência', classe: 'cell-feriado-restauracao', emoji: '🔴'},
+          {data: '2026-12-08', nome: 'Imaculada Conceição', classe: 'cell-feriado-imaculada', emoji: '🔴'},
+          {data: '2026-12-25', nome: 'Natal', classe: 'cell-feriado-natal', emoji: '🔴'},
+          {data: '2026-04-03', nome: 'Sexta-feira Santa', classe: 'cell-feriado-sexta-santa', emoji: '🔴'},
+          {data: '2026-04-05', nome: 'Domingo de Páscoa', classe: 'cell-feriado-pascoa', emoji: '🔴'},
+          {data: '2026-06-04', nome: 'Corpus Christi', classe: 'cell-feriado-corpus-christi', emoji: '🔴'}
+        ];
+      }
+
+      // fixos em YYYY-MM-DD (para bater com date.toISOString().split('T')[0])
+      const fixos = [
+        {data: `${ano}-01-01`, nome: 'Ano Novo'},
+        {data: `${ano}-04-25`, nome: 'Liberdade'},
+        {data: `${ano}-05-01`, nome: 'Trabalhador'},
+        {data: `${ano}-06-10`, nome: 'Portugal'},
+        {data: `${ano}-08-15`, nome: 'Assunção'},
+        {data: `${ano}-10-05`, nome: 'República'},
+        {data: `${ano}-11-01`, nome: 'Todos os Santos'},
+        {data: `${ano}-12-01`, nome: 'Restauração'},
+        {data: `${ano}-12-08`, nome: 'Imaculada'},
+        {data: `${ano}-12-25`, nome: 'Natal'}
+      ];
+
+      // Nota: cálculo de móveis simplificado (mantido), mas garantindo formato ISO
+      const pascoa = new Date(ano, 3, 22 + Math.floor(((5.5 + ano) % 19 * 11 + 3) % 30));
+      const sextaSanta = new Date(pascoa); sextaSanta.setDate(pascoa.getDate() - 2);
+      const corpoDeus = new Date(pascoa); corpoDeus.setDate(pascoa.getDate() + 60);
+
+      fixos.push(
+        {data: sextaSanta.toISOString().split('T')[0], nome: 'Sexta Santa'},
+        {data: pascoa.toISOString().split('T')[0], nome: 'Páscoa'},
+        {data: corpoDeus.toISOString().split('T')[0], nome: 'Corpo de Deus'}
+      );
+
+      return fixos.map(f => ({...f, classe: 'cell-holiday', emoji: '🔴'}));
+    }
+
+    // ---------------------------
+    // Storage (Apps Script)
+    // ---------------------------
+    async function loadFromStorage(ano) {
+      try {
+        const payload = await apiCall({ action: 'load', ano: String(ano) });
+
+        const loadedDados =
+          payload && payload.dados
+            ? (typeof payload.dados === 'string' ? JSON.parse(payload.dados) : payload.dados)
+            : {};
+
+        const loadedFeriasAnt =
+          payload && payload.feriasAnteriores
+            ? (typeof payload.feriasAnteriores === 'string' ? JSON.parse(payload.feriasAnteriores) : payload.feriasAnteriores)
+            : {};
+
+        // base vazia do ano
+        dados = {};
+        colaboradores.forEach(colab => {
+          dados[colab] = {};
+          let date = new Date(ano, 0, 1);
+          const endDate = new Date(ano, 11, 31);
+          while (date <= endDate) {
+            const dateStr = date.toISOString().split('T')[0];
+            dados[colab][dateStr] = '';
+            date.setDate(date.getDate() + 1);
+          }
+        });
+
+        // overlay do backend
+        Object.keys(loadedDados).forEach(colab => {
+          if (!dados[colab]) dados[colab] = {};
+          Object.keys(loadedDados[colab]).forEach(dateStr => {
+            dados[colab][dateStr] = loadedDados[colab][dateStr];
+          });
+        });
+
+        feriasAnteriores = {};
+        colaboradores.forEach(colab => {
+          feriasAnteriores[colab] = loadedFeriasAnt[colab] || 0;
+        });
+
+      } catch (e) {
+        console.error('Erro ao carregar do servidor, iniciando vazio:', e);
+
+        // fallback vazio
+        dados = {};
+        colaboradores.forEach(colab => {
+          dados[colab] = {};
+          let date = new Date(ano, 0, 1);
+          const endDate = new Date(ano, 11, 31);
+          while (date <= endDate) {
+            const dateStr = date.toISOString().split('T')[0];
+            dados[colab][dateStr] = '';
+            date.setDate(date.getDate() + 1);
+          }
+        });
+
+        feriasAnteriores = {};
+        colaboradores.forEach(colab => (feriasAnteriores[colab] = 0));
+      }
+    }
+
+    async function saveToStorage(ano) {
+      // ATENÇÃO: este GET envia o JSON inteiro; se crescer muito, pode estourar limite de URL.
+      // Quando isso acontecer, salva por "delta" (colab/date/value) no backend.
+      return await apiCall({
+        action: 'save',
+        ano: String(ano),
+        dados: JSON.stringify(dados),
+        feriasAnteriores: JSON.stringify(feriasAnteriores)
+      });
+    }
+
+    async function initData(ano) {
+      currentYear = ano;
+      await loadFromStorage(ano);
+      renderTimeline();
+      updateResumo();
+    }
+
+    // ---------------------------
+    // Render Timeline
+    // ---------------------------
+    function renderTimeline() {
+      const table = document.getElementById('timeline-table');
+      table.innerHTML = '';
+
+      const feriados = getFeriados(currentYear);
+
+      const headerRow = document.createElement('tr');
+      const headerCell = document.createElement('th');
+      headerCell.textContent = 'Colaborador';
+      headerRow.appendChild(headerCell);
+
+      let date = new Date(currentYear, 0, 1);
+      const endDate = new Date(currentYear, 11, 31);
+
+      while (date <= endDate) {
+        const th = document.createElement('th');
+
+        const day = date.getDate();
+        const mes = date.toLocaleDateString('pt-PT', { month: 'short' }).toUpperCase();
+        const weekday = getDayName(date.getDay()).substring(0, 3).toUpperCase();
+
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'day-header';
+
+        const monthAbbr = document.createElement('div');
+        monthAbbr.className = 'month-abbr';
+        monthAbbr.textContent = mes;
+
+        const dayNumber = document.createElement('div');
+        dayNumber.className = 'day-number';
+        dayNumber.textContent = day;
+
+        const weekdayBottomDiv = document.createElement('div');
+        weekdayBottomDiv.className = 'weekday-bottom';
+        weekdayBottomDiv.textContent = weekday;
+
+        dayHeader.appendChild(monthAbbr);
+        dayHeader.appendChild(dayNumber);
+        dayHeader.appendChild(weekdayBottomDiv);
+        th.appendChild(dayHeader);
+
+        th.title = date.toLocaleDateString('pt-PT');
+
+        const dateStr = date.toISOString().split('T')[0];
+        const feriado = feriados.find(f => f.data === dateStr);
+        if (feriado) {
+          th.title += `\n${feriado.emoji} ${feriado.nome}`;
+          th.className = feriado.classe;
+        } else if (date.getDay() === 0 || date.getDay() === 6) {
+          th.className = 'cell-weekend';
+        }
+
+        headerRow.appendChild(th);
+        date.setDate(date.getDate() + 1);
+      }
+      table.appendChild(headerRow);
+
+      colaboradores.forEach(colab => {
+        const row = document.createElement('tr');
+
+        const nameCell = document.createElement('td');
+        nameCell.textContent = colab;
+        row.appendChild(nameCell);
+
+        let d = new Date(currentYear, 0, 1);
+        while (d <= endDate) {
+          const dateStr = d.toISOString().split('T')[0];
+          const cell = document.createElement('td');
+          const value = (dados[colab] && dados[colab][dateStr]) ? dados[colab][dateStr] : '';
+
+          if (value === 'F') cell.className = 'cell-f';
+          else if (value === 'M') cell.className = 'cell-m';
+          else if (value === 'T') cell.className = 'cell-t';
+          else {
+            const feriado = feriados.find(f => f.data === dateStr);
+            if (feriado) {
+              cell.className = feriado.classe;
+              cell.title = `${feriado.emoji} ${feriado.nome}`;
+            } else if (d.getDay() === 0 || d.getDay() === 6) {
+              cell.className = 'cell-weekend';
+            } else {
+              cell.className = 'cell-empty';
             }
-            
-            const fixos = [
-                {data: `01-01-${ano}`, nome: "Ano Novo"},
-                {data: `25-04-${ano}`, nome: "Liberdade"},
-                {data: `01-05-${ano}`, nome: "Trabalhador"},
-                {data: `10-06-${ano}`, nome: "Portugal"},
-                {data: `15-08-${ano}`, nome: "Assunção"},
-                {data: `05-10-${ano}`, nome: "República"},
-                {data: `01-11-${ano}`, nome: "Todos os Santos"},
-                {data: `01-12-${ano}`, nome: "Restauração"},
-                {data: `08-12-${ano}`, nome: "Imaculada"},
-                {data: `25-12-${ano}`, nome: "Natal"}
-            ];
+          }
 
-            const pascoa = new Date(ano, 3, 22 + Math.floor((5.5 + ano) % 19 * 11 + 3) % 30);
-            const sextaSanta = new Date(pascoa);
-            sextaSanta.setDate(pascoa.getDate() - 2);
-            const corpoDeus = new Date(pascoa);
-            corpoDeus.setDate(pascoa.getDate() + 60);
+          cell.textContent = value || '';
 
-            fixos.push(
-                {data: sextaSanta.toISOString().split('T')[0], nome: "Sexta Santa"},
-                {data: pascoa.toISOString().split('T')[0], nome: "Páscoa"},
-                {data: corpoDeus.toISOString().split('T')[0], nome: "Corpo de Deus"}
-            );
+          cell.onclick = function() {
+            const cellDate = new Date(dateStr + 'T00:00:00');
+            currentCell = { colab, dateStr };
 
-            return fixos.map(f => ({...f, classe: 'cell-holiday', emoji: '🇵🇹'}));
+            const feriado = feriados.find(f => f.data === dateStr);
+            const info = `📅 ${cellDate.toLocaleDateString('pt-PT')} (${getDayName(cellDate.getDay())})<br>` +
+              `Colaborador: ${colab}<br>` +
+              `Valor atual: ${value || 'vazio'}<br>` +
+              `${feriado ? (feriado.emoji + ' FERIADO: ' + feriado.nome) : ''}`;
+
+            document.getElementById('modal-info').innerHTML = info;
+            document.getElementById('modal').style.display = 'flex';
+          };
+
+          row.appendChild(cell);
+          d.setDate(d.getDate() + 1);
         }
 
-        // Carrega do Google Sheets - VERSÃO CORRIGIDA
-        async function loadFromStorage(ano) {
-            try {
-                console.log('Iniciando loadFromStorage para o ano:', ano);
-                
-                const url = `${API_BASE}?ano=${ano}`;
-                console.log('URL da requisição:', url);
-                
-                const res = await fetch(url);
-                console.log('Resposta do servidor:', res.status, res.statusText);
-                
-                if (!res.ok) {
-                    throw new Error(`Erro HTTP: ${res.status} - ${res.statusText}`);
-                }
+        table.appendChild(row);
+      });
+    }
 
-                const payload = await res.json();
-                console.log('Dados recebidos do servidor:', payload);
+    // ---------------------------
+    // Resumo
+    // ---------------------------
+    function updateResumo() {
+      const table = document.getElementById('resumo-table');
+      table.innerHTML = '';
 
-                const loadedDados = payload.dados ? JSON.parse(payload.dados) : {};
-                const loadedFeriasAnt = payload.feriasAnteriores ? JSON.parse(payload.feriasAnteriores) : {};
+      const headerRow = document.createElement('tr');
+      ['Colaborador', 'Férias Ant. <span style="font-size:12px">(clicar)</span>', 'Férias ' + currentYear, 'Total Disp.', 'Gozadas (F)', 'Marcadas (M+T)', 'Por Marcar']
+        .forEach(header => {
+          const th = document.createElement('th');
+          th.innerHTML = header;
+          headerRow.appendChild(th);
+        });
+      table.appendChild(headerRow);
 
-                console.log('Dados carregados:', loadedDados);
-                console.log('Férias anteriores carregadas:', loadedFeriasAnt);
+      let totalMarcados = 0;
 
-                // Inicializa estrutura base com dias vazios
-                dados = {};
-                colaboradores.forEach(colab => {
-                    dados[colab] = {};
-                    let date = new Date(ano, 0, 1);
-                    let endDate = new Date(ano, 11, 31);
-                    while (date <= endDate) {
-                        const dateStr = date.toISOString().split('T')[0];
-                        dados[colab][dateStr] = '';
-                        date.setDate(date.getDate() + 1);
-                    }
-                });
+      colaboradores.forEach(colab => {
+        const values = Object.values(dados[colab] || {});
+        const gozadasF = values.filter(v => v === 'F').length;
+        const marcadasMT = values.filter(v => v === 'M' || v === 'T').length * 0.5;
 
-                // Sobrepõe com o que veio do backend
-                Object.keys(loadedDados).forEach(colab => {
-                    if (!dados[colab]) dados[colab] = {};
-                    Object.keys(loadedDados[colab]).forEach(dateStr => {
-                        dados[colab][dateStr] = loadedDados[colab][dateStr];
-                    });
-                });
+        const ferAnt = feriasAnteriores[colab] || 0;
+        const ferAno = 22;
+        const totalDisp = ferAnt + ferAno;
+        const porMarcar = totalDisp - gozadasF - marcadasMT;
 
-                // Férias anteriores
-                feriasAnteriores = {};
-                colaboradores.forEach(colab => {
-                    feriasAnteriores[colab] = loadedFeriasAnt[colab] || 0;
-                });
+        totalMarcados += gozadasF + marcadasMT;
 
-                console.log('Dados finais carregados com sucesso');
-                
-            } catch (e) {
-                console.error('Erro detalhado ao carregar do servidor:', e);
-                console.log('Inicializando com dados vazios');
-                
-                // Inicialização com dados vazios
-                dados = {};
-                colaboradores.forEach(colab => {
-                    dados[colab] = {};
-                    let date = new Date(ano, 0, 1);
-                    let endDate = new Date(ano, 11, 31);
-                    while (date <= endDate) {
-                        const dateStr = date.toISOString().split('T')[0];
-                        dados[colab][dateStr] = '';
-                        date.setDate(date.getDate() + 1);
-                    }
-                });
-                feriasAnteriores = {};
-                colaboradores.forEach(colab => {
-                    feriasAnteriores[colab] = 0;
-                });
-            }
-        }
+        const row = document.createElement('tr');
+        const cells = [colab, ferAnt, ferAno, totalDisp, gozadasF, marcadasMT.toFixed(1), porMarcar.toFixed(1)];
 
-        // Grava no Google Sheets - VERSÃO CORRIGIDA
-        async function saveToStorage(ano) {
-            try {
-                console.log('Iniciando saveToStorage para o ano:', ano);
-                
-                // Prepara os dados em formato mais simples
-                const dataToSend = {
-                    ano: ano,
-                    dados: JSON.stringify(dados),
-                    feriasAnteriores: JSON.stringify(feriasAnteriores)
-                };
+        cells.forEach((cellValue, idx) => {
+          const td = document.createElement('td');
+          td.textContent = cellValue;
 
-                console.log('Dados a enviar:', dataToSend);
-
-                const response = await fetch(API_BASE, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(dataToSend)
-                });
-
-                console.log('Resposta do servidor:', response.status, response.statusText);
-                
-                if (!response.ok) {
-                    throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
-                }
-
-                const result = await response.json();
-                console.log('Resultado do servidor:', result);
-                
-                return result;
-            } catch (error) {
-                console.error('Erro detalhado ao gravar no servidor:', error);
-                alert('Erro ao salvar dados: ' + error.message + '\nVerifique o console para mais detalhes.');
-                throw error;
-            }
-        }
-
-        async function initData(ano) {
-            currentYear = ano;
-            await loadFromStorage(ano);
-            renderTimeline();
-            updateResumo();
-        }
-
-        /* ... Todo o JavaScript anterior permanece igual até renderTimeline() ... */
-
-        function renderTimeline() {
-            const table = document.getElementById('timeline-table');
-            table.innerHTML = '';
-
-            const feriados = getFeriados(currentYear);
-
-            const headerRow = document.createElement('tr');
-            const headerCell = document.createElement('th');
-            headerCell.textContent = 'Colaborador';
-            headerRow.appendChild(headerCell);
-
-            let date = new Date(currentYear, 0, 1);
-            let endDate = new Date(currentYear, 11, 31);
-
-            while (date <= endDate) {
-                const th = document.createElement('th');
-                const day = date.getDate();
-                const mes = date.toLocaleDateString('pt-PT', { month: 'short' }).toUpperCase();
-                const weekday = getDayName(date.getDay()).substring(0, 3).toUpperCase(); // SEG, TER, QUA...
-
-                const dayHeader = document.createElement('div');
-                dayHeader.className = 'day-header';
-
-                const monthAbbr = document.createElement('div');
-                monthAbbr.className = 'month-abbr';
-                monthAbbr.textContent = mes;
-
-                const dayNumber = document.createElement('div');
-                dayNumber.className = 'day-number';
-                dayNumber.textContent = day;
-
-                // ✅ DIA DA SEMANA ABAIXO DO NÚMERO (NOVO)
-                const weekdayBottomDiv = document.createElement('div');
-                weekdayBottomDiv.className = 'weekday-bottom';
-                weekdayBottomDiv.textContent = weekday;
-
-                // Ordem: MÊS / NÚMERO / DIA DA SEMANA (embaixo)
-                dayHeader.appendChild(monthAbbr);
-                dayHeader.appendChild(dayNumber);
-                dayHeader.appendChild(weekdayBottomDiv);
-                th.appendChild(dayHeader);
-
-                th.title = date.toLocaleDateString('pt-PT');
-
-                const dateStr = date.toISOString().split('T')[0];
-                const feriado = feriados.find(f => f.data === dateStr);
-                if (feriado) {
-                    th.title += `\n${feriado.emoji} ${feriado.nome}`;
-                    th.className = feriado.classe;
-                } else if (date.getDay() === 0 || date.getDay() === 6) {
-                    th.className = 'cell-weekend';
-                }
-
-                headerRow.appendChild(th);
-                date.setDate(date.getDate() + 1);
-            }
-            table.appendChild(headerRow);
-            colaboradores.forEach(colab => {
-                const row = document.createElement('tr');
-
-                const nameCell = document.createElement('td');
-                nameCell.textContent = colab;
-                row.appendChild(nameCell);
-
-                date = new Date(currentYear, 0, 1);
-                while (date <= endDate) {
-                    const dateStr = date.toISOString().split('T')[0];
-                    const cell = document.createElement('td');
-                    const value = dados[colab][dateStr] || '';
-
-                    if (value === 'F') cell.className = 'cell-f';
-                    else if (value === 'M') cell.className = 'cell-m';
-                    else if (value === 'T') cell.className = 'cell-t';
-                    else {
-                        const feriado = feriados.find(f => f.data === dateStr);
-                        if (feriado) {
-                            cell.className = feriado.classe;
-                            cell.title = `${feriado.emoji} ${feriado.nome}`;
-                        } else if (date.getDay() === 0 || date.getDay() === 6) {
-                            cell.className = 'cell-weekend';
-                        } else {
-                            cell.className = 'cell-empty';
-                        }
-                    }
-
-                    cell.textContent = value || '';
-                    
-                    cell.onclick = function() {
-                        const cellDate = new Date(dateStr + 'T00:00:00');
-                        currentCell = {colab, dateStr};
-                        const feriado = feriados.find(f => f.data === dateStr);
-                        const info = `📅 ${cellDate.toLocaleDateString('pt-PT')} (${getDayName(cellDate.getDay())})<br>Colaborador: ${colab}<br>Valor atual: ${value || 'vazio'}<br>${feriado ? feriado.emoji + ' FERIADO: ' + feriado.nome : ''}`;
-                        document.getElementById('modal-info').innerHTML = info;
-                        document.getElementById('modal').style.display = 'flex';
-                    };
-
-                    row.appendChild(cell);
-                    date.setDate(date.getDate() + 1);
-                }
-                table.appendChild(row);
-            });
-        }
-
-        function updateResumo() {
-            const table = document.getElementById('resumo-table');
-            table.innerHTML = '';
-
-            const headerRow = document.createElement('tr');
-            ['Colaborador', 'Férias Ant. <span style="font-size:12px">(clicar)</span>', 'Férias ' + currentYear, 'Total Disp.', 'Gozadas (F)', 'Marcadas (M+T)', 'Por Marcar'].forEach(header => {
-                const th = document.createElement('th');
-                th.innerHTML = header;
-                headerRow.appendChild(th);
-            });
-            table.appendChild(headerRow);
-
-            let totalMarcados = 0;
-
-            colaboradores.forEach(colab => {
-                const gozadasF = Object.values(dados[colab]).filter(v => v === 'F').length;
-                const marcadasMT = Object.values(dados[colab]).filter(v => v === 'M' || v === 'T').length * 0.5;
-                const ferAnt = feriasAnteriores[colab] || 0;
-                const ferAno = 22;
-                const totalDisp = ferAnt + ferAno;
-                const porMarcar = totalDisp - gozadasF - marcadasMT;
-
-                totalMarcados += gozadasF + marcadasMT;
-
-                const row = document.createElement('tr');
-                const cells = [
-                    colab,
-                    ferAnt,
-                    ferAno,
-                    totalDisp,
-                    gozadasF,
-                    marcadasMT.toFixed(1),
-                    porMarcar.toFixed(1)
-                ];
-
-                cells.forEach((cell, idx) => {
-                    const td = document.createElement('td');
-                    td.textContent = cell;
-
-                    if (idx === 1) {
-                        td.className = 'cell-editable';
-                        td.onclick = function() {
-                            const novoValor = prompt('Férias Anteriores para ' + colab + ':', ferAnt);
-                            if (novoValor !== null && !isNaN(novoValor) && novoValor >= 0) {
-                                feriasAnteriores[colab] = parseFloat(novoValor);
-                                saveToStorage(currentYear);
-                                updateResumo();
-                            }
-                        };
-                    } else if (idx >= 3) {
-                        td.className = 'cell-calc';
-                    }
-
-                    row.appendChild(td);
-                });
-
-                table.appendChild(row);
-            });
-
-            document.getElementById('total-marcados').textContent = totalMarcados.toFixed(1);
-        }
-
-        function setCell(value) {
-            if (currentCell) {
-                dados[currentCell.colab][currentCell.dateStr] = value;
-                saveToStorage(currentYear);
-                renderTimeline();
+          if (idx === 1) {
+            td.className = 'cell-editable';
+            td.onclick = async function() {
+              const novoValor = prompt('Férias Anteriores para ' + colab + ':', ferAnt);
+              if (novoValor !== null && !isNaN(novoValor) && Number(novoValor) >= 0) {
+                feriasAnteriores[colab] = parseFloat(novoValor);
+                try { await saveToStorage(currentYear); } catch(e) {}
                 updateResumo();
-                closeModal();
-            }
-        }
-
-        function closeModal() {
-            document.getElementById('modal').style.display = 'none';
-        }
-
-        function clearAll() {
-            if (confirm('Limpar todos os dados deste ano?')) {
-                initData(currentYear);
-            }
-        }
-
-        function exportToCSV() {
-            let csv = 'Colaborador,Férias Ant.,Férias ' + currentYear + ',Total,Gozadas F,Marcadas M+T,Por Marcar\n';
-            colaboradores.forEach(colab => {
-                const gozadasF = Object.values(dados[colab]).filter(v => v === 'F').length;
-                const marcadasMT = Object.values(dados[colab]).filter(v => v === 'M' || v === 'T').length * 0.5;
-                const ferAnt = feriasAnteriores[colab] || 0;
-                const ferAno = 22;
-                const totalDisp = ferAnt + ferAno;
-                const porMarcar = totalDisp - gozadasF - marcadasMT;
-
-                csv += `${colab},${ferAnt},${ferAno},${totalDisp},${gozadasF},${marcadasMT.toFixed(1)},${porMarcar.toFixed(1)}\n`;
-            });
-
-            const link = document.createElement('a');
-            link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-            link.download = `Mapa_Ferias_${currentYear}.csv`;
-            link.click();
-        }
-
-        function getDayName(day) {
-            const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-            return days[day];
-        }
-
-        function loadYear() {
-            const ano = parseInt(document.getElementById('year-select').value);
-            initData(ano);
-        }
-
-        window.onload = async function() {
-            await initData(2026);
-
-            document.getElementById('year-select').addEventListener('change', async function() {
-                const ano = parseInt(this.value);
-                await initData(ano);
-            });
-
-            window.onclick = function(event) {
-                const modal = document.getElementById('modal');
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                }
+              }
             };
-        };
-    </script>
+          } else if (idx >= 3) {
+            td.className = 'cell-calc';
+          }
+
+          row.appendChild(td);
+        });
+
+        table.appendChild(row);
+      });
+
+      document.getElementById('total-marcados').textContent = totalMarcados.toFixed(1);
+    }
+
+    // ---------------------------
+    // Modal / Ações
+    // ---------------------------
+    async function setCell(value) {
+      if (!currentCell) return;
+
+      dados[currentCell.colab][currentCell.dateStr] = value;
+
+      try {
+        await saveToStorage(currentYear);
+      } catch (e) {
+        alert('Falha ao salvar no Google Sheets: ' + e.message);
+      }
+
+      renderTimeline();
+      updateResumo();
+      closeModal();
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+    }
+
+    async function clearAll() {
+      if (!confirm('Limpar todos os dados deste ano?')) return;
+
+      // zera tudo local
+      Object.keys(dados).forEach(colab => {
+        Object.keys(dados[colab]).forEach(dateStr => {
+          dados[colab][dateStr] = '';
+        });
+      });
+      Object.keys(feriasAnteriores).forEach(colab => (feriasAnteriores[colab] = 0));
+
+      try {
+        await saveToStorage(currentYear);
+      } catch (e) {
+        alert('Falha ao salvar limpeza no Google Sheets: ' + e.message);
+      }
+
+      renderTimeline();
+      updateResumo();
+    }
+
+    function exportToCSV() {
+      let csv = 'Colaborador,Férias Ant.,Férias ' + currentYear + ',Total,Gozadas F,Marcadas M+T,Por Marcar\n';
+      colaboradores.forEach(colab => {
+        const values = Object.values(dados[colab] || {});
+        const gozadasF = values.filter(v => v === 'F').length;
+        const marcadasMT = values.filter(v => v === 'M' || v === 'T').length * 0.5;
+        const ferAnt = feriasAnteriores[colab] || 0;
+        const ferAno = 22;
+        const totalDisp = ferAnt + ferAno;
+        const porMarcar = totalDisp - gozadasF - marcadasMT;
+
+        csv += `${colab},${ferAnt},${ferAno},${totalDisp},${gozadasF},${marcadasMT.toFixed(1)},${porMarcar.toFixed(1)}\n`;
+      });
+
+      const link = document.createElement('a');
+      link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+      link.download = `Mapa_Ferias_${currentYear}.csv`;
+      link.click();
+    }
+
+    function getDayName(day) {
+      const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+      return days[day];
+    }
+
+    function loadYear() {
+      const ano = parseInt(document.getElementById('year-select').value, 10);
+      initData(ano);
+    }
+
+    window.onload = async function() {
+      await initData(2026);
+
+      document.getElementById('year-select').addEventListener('change', async function() {
+        const ano = parseInt(this.value, 10);
+        await initData(ano);
+      });
+
+      window.onclick = function(event) {
+        const modal = document.getElementById('modal');
+        if (event.target === modal) modal.style.display = 'none';
+      };
+    };
+  </script>
 </body>
 </html>
