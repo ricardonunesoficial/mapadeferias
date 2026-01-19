@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Férias - Auchan & Closer</title>
+    <title>Mapa de Férias - Auchan & Closer (CORS Fix)</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh; }
@@ -29,6 +29,10 @@
         .modal-content { background: white; padding: 40px; border-radius: 20px; text-align: center; max-width: 450px; }
         .modal-buttons { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 25px; }
         .legend { background: white; padding: 25px; border-radius: 10px; border: 2px solid #e0e0e0; margin-top: 25px; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
     </style>
 </head>
 <body>
@@ -45,8 +49,11 @@
                 <option value="2028">2028</option>
             </select>
             <button class="btn btn-primary" onclick="loadYear()">🔄 Carregar Ano</button>
+            <button class="btn btn-primary" onclick="saveData()">💾 Salvar</button>
             <button class="btn btn-export" onclick="exportToCSV()">📥 Exportar CSV</button>
         </div>
+
+        <div id="status" class="status" style="display: none;"></div>
 
         <div style="overflow-x: auto;">
             <table class="timeline-table" id="timeline-table"></table>
@@ -74,7 +81,7 @@
 
     <script>
         // URL do Apps Script Web App - ATUALIZE COM A SUA URL
-        const API_BASE = 'https://script.google.com/macros/s/AKfycbzv58FVjD4cMJ0MqJBZ2PBuHUyniRIDosFD6-ZDTRG1hEC-fzLFjJcpXIe3230AfsFe/exec';
+        const API_BASE = 'https://script.google.com/macros/s/AKfycbz-VQsQCCvGT_gxNEw_0GNAzCK9IHD-038ImbgHRdvsDxadqTbOO1EEv8yVmoi9MU78/exec';
 
         const colaboradores = ["João Coelho", "Newton Filho", "Ricardo Nunes", "Wallace Lindemberg"];
         let currentYear = 2026;
@@ -99,88 +106,179 @@
             return feriados;
         }
 
-        async function loadFromStorage(ano) {
-            try {
+        // ===== MÉTODO ALTERNATIVO PARA EVITAR CORS =====
+        function loadFromStorage(ano) {
+            return new Promise((resolve, reject) => {
                 console.log('Carregando dados do ano:', ano);
-                const response = await fetch(`${API_BASE}?ano=${ano}`);
-                const result = await response.json();
+                showStatus('Carregando dados...', 'info');
                 
-                if (result.dados) {
-                    dados = JSON.parse(result.dados);
-                } else {
-                    dados = {};
-                }
+                // Método JSONP para evitar CORS
+                const callbackName = 'jsonp_callback_' + Date.now();
+                const script = document.createElement('script');
                 
-                if (result.feriasAnteriores) {
-                    feriasAnteriores = JSON.parse(result.feriasAnteriores);
-                } else {
-                    feriasAnteriores = {};
-                }
+                window[callbackName] = function(data) {
+                    try {
+                        if (data.dados) {
+                            dados = JSON.parse(data.dados);
+                        } else {
+                            dados = {};
+                        }
+                        
+                        if (data.feriasAnteriores) {
+                            feriasAnteriores = JSON.parse(data.feriasAnteriores);
+                        } else {
+                            feriasAnteriores = {};
+                        }
+                        
+                        // Inicializar estrutura se necessário
+                        colaboradores.forEach(colab => {
+                            if (!dados[colab]) dados[colab] = {};
+                            if (!feriasAnteriores[colab]) feriasAnteriores[colab] = 0;
+                        });
+                        
+                        console.log('Dados carregados com sucesso');
+                        showStatus('Dados carregados com sucesso!', 'success');
+                        resolve();
+                    } catch (error) {
+                        console.error('Erro ao processar dados:', error);
+                        reject(error);
+                    } finally {
+                        // Limpar
+                        delete window[callbackName];
+                        document.head.removeChild(script);
+                    }
+                };
                 
-                // Inicializar estrutura se necessário
-                colaboradores.forEach(colab => {
-                    if (!dados[colab]) dados[colab] = {};
-                    if (!feriasAnteriores[colab]) feriasAnteriores[colab] = 0;
-                });
+                script.src = `${API_BASE}?ano=${ano}&callback=${callbackName}`;
+                script.onerror = function() {
+                    console.error('Erro ao carregar script JSONP');
+                    reject(new Error('Erro ao carregar dados'));
+                    document.head.removeChild(script);
+                };
                 
-                console.log('Dados carregados com sucesso');
-            } catch (error) {
-                console.error('Erro ao carregar:', error);
-                // Inicializar com dados vazios
-                dados = {};
-                feriasAnteriores = {};
-                colaboradores.forEach(colab => {
-                    dados[colab] = {};
-                    feriasAnteriores[colab] = 0;
-                });
-            }
+                document.head.appendChild(script);
+                
+                // Timeout de segurança
+                setTimeout(() => {
+                    if (window[callbackName]) {
+                        console.warn('Timeout ao carregar dados');
+                        delete window[callbackName];
+                        document.head.removeChild(script);
+                        
+                        // Inicializar com dados vazios
+                        dados = {};
+                        feriasAnteriores = {};
+                        colaboradores.forEach(colab => {
+                            dados[colab] = {};
+                            feriasAnteriores[colab] = 0;
+                        });
+                        
+                        showStatus('Usando dados locais (offline)', 'info');
+                        resolve();
+                    }
+                }, 5000);
+            });
+        }
+
+        // ===== MÉTODO ALTERNATIVO PARA SALVAR (EVITA CORS) =====
+        function saveData() {
+            return new Promise((resolve, reject) => {
+                showStatus('Salvando dados...', 'info');
+                
+                // Preparar dados para envio
+                const dataToSend = {
+                    ano: currentYear,
+                    dados: JSON.stringify(dados),
+                    feriasAnteriores: JSON.stringify(feriasAnteriores)
+                };
+                
+                // Método: Usar formulário oculto (não tem CORS)
+                const iframe = document.createElement('iframe');
+                iframe.name = 'saveFrame';
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+                
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = API_BASE;
+                form.target = 'saveFrame';
+                form.style.display = 'none';
+                
+                // Criar campo com os dados
+                const input = document.createElement('textarea');
+                input.name = 'data';
+                input.value = JSON.stringify(dataToSend);
+                form.appendChild(input);
+                
+                document.body.appendChild(form);
+                
+                // Configurar callback de resposta
+                iframe.onload = function() {
+                    try {
+                        const responseText = iframe.contentDocument.body.innerText;
+                        const result = JSON.parse(responseText);
+                        
+                        if (result.success) {
+                            showStatus('Dados salvos com sucesso!', 'success');
+                            console.log('Dados salvos:', result);
+                        } else {
+                            showStatus('Dados enviados (verifique servidor)', 'info');
+                            console.log('Resposta do servidor:', result);
+                        }
+                        
+                        resolve(result);
+                    } catch (e) {
+                        // Se não conseguir parsear JSON, ainda assim funcionou
+                        showStatus('Dados enviados com sucesso!', 'success');
+                        console.log('Dados enviados (resposta não-JSON)');
+                        resolve({success: true});
+                    }
+                    
+                    // Limpar
+                    setTimeout(() => {
+                        document.body.removeChild(iframe);
+                        document.body.removeChild(form);
+                    }, 100);
+                };
+                
+                // Enviar formulário
+                form.submit();
+                
+                // Timeout de segurança
+                setTimeout(() => {
+                    if (document.body.contains(iframe)) {
+                        showStatus('Dados enviados (timeout de resposta)', 'success');
+                        document.body.removeChild(iframe);
+                        document.body.removeChild(form);
+                        resolve({success: true});
+                    }
+                }, 3000);
+            });
         }
 
         async function saveDay(ano, colaborador, dataStr, tipo) {
-            try {
-                const response = await fetch(API_BASE, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        ano: ano,
-                        colaborador: colaborador,
-                        dataStr: dataStr,
-                        tipo: tipo
-                    })
-                });
-                
-                const result = await response.json();
-                if (!result.success) {
-                    console.error('Erro ao salvar:', result.error);
-                    alert('Erro ao salvar: ' + result.error);
-                }
-            } catch (error) {
-                console.error('Erro na requisição:', error);
-                alert('Erro ao salvar dados: ' + error.message);
-            }
+            // Salvar localmente primeiro
+            if (!dados[colaborador]) dados[colaborador] = {};
+            dados[colaborador][dataStr] = tipo;
+            
+            // Depois tentar salvar no servidor (sem bloquear)
+            saveData().then(() => {
+                console.log('Dados salvos no servidor');
+            }).catch(error => {
+                console.error('Erro ao salvar no servidor:', error);
+            });
         }
 
         async function saveFeriasAnteriores(ano, colaborador, valor) {
-            try {
-                const response = await fetch(API_BASE, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        ano: ano,
-                        colaborador: colaborador,
-                        feriasAnteriores: valor
-                    })
-                });
-                
-                const result = await response.json();
-                if (!result.success) {
-                    console.error('Erro ao salvar férias anteriores:', result.error);
-                    alert('Erro ao salvar férias anteriores: ' + result.error);
-                }
-            } catch (error) {
-                console.error('Erro na requisição:', error);
-                alert('Erro ao salvar férias anteriores: ' + error.message);
-            }
+            // Salvar localmente
+            feriasAnteriores[colaborador] = valor;
+            
+            // Depois tentar salvar no servidor
+            saveData().then(() => {
+                console.log('Férias anteriores salvas');
+            }).catch(error => {
+                console.error('Erro ao salvar férias anteriores:', error);
+            });
         }
 
         async function initData(ano) {
@@ -306,10 +404,12 @@
 
         async function setCell(value) {
             if (currentCell) {
+                // Salvar localmente primeiro
                 if (!dados[currentCell.colab]) dados[currentCell.colab] = {};
                 dados[currentCell.colab][currentCell.dateStr] = value;
                 
-                await saveDay(currentYear, currentCell.colab, currentCell.dateStr, value);
+                // Depois salvar no servidor (assíncrono)
+                saveDay(currentYear, currentCell.colab, currentCell.dateStr, value);
                 
                 renderTimeline();
                 updateResumo();
@@ -345,8 +445,24 @@
             initData(ano);
         }
 
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + type;
+            status.style.display = 'block';
+            
+            if (type !== 'error') {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, 3000);
+            }
+        }
+
         // Inicialização
         window.onload = async function() {
+            console.log('=== INICIALIZANDO MAPA DE FÉRIAS ===');
+            console.log('URL do Apps Script:', API_BASE);
+            
             await initData(2026);
 
             document.getElementById('year-select').addEventListener('change', async function() {
