@@ -187,7 +187,7 @@
             font-size: 11px;
         }
 
-        /* NOVO: Header com MÊS + DIA */
+        /* Header com MÊS + DIA */
         .day-header {
             display: flex;
             flex-direction: column;
@@ -250,7 +250,7 @@
             color: #999 !important;
         }
 
-        /* FÉRIAS - TEXTO BRANCO */
+        /* FÉRIAS */
         .cell-f {
             background: linear-gradient(135deg, #00B050, #009040) !important;
             color: white !important;
@@ -266,7 +266,7 @@
             color: white !important;
         }
 
-               /* FERIADOS 2026 - TODOS COM TEXTO BRANCO */
+        /* FERIADOS 2026 */
         .cell-feriado-ano-novo { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
         .cell-feriado-liberdade { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
         .cell-feriado-trabalhador { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
@@ -636,6 +636,9 @@
     </div>
 
     <script>
+        // URL do Apps Script Web App
+        const API_BASE = 'https://script.google.com/macros/s/AKfycbzv58FVjD4cMJ0MqJBZ2PBuHUyniRIDosFD6-ZDTRG1hEC-fzLFjJcpXIe3230AfsFe/exec';
+
         const colaboradores = ["João Coelho", "Newton Filho", "Ricardo Nunes", "Wallace Lindemberg"];
         let currentYear = 2026;
         let dados = {};
@@ -689,158 +692,182 @@
             return fixos.map(f => ({...f, classe: 'cell-holiday', emoji: '🇵🇹'}));
         }
 
-        function initData(ano) {
-            const feriados = getFeriados(ano);
-            currentYear = ano;
-
-            dados = {};
-            colaboradores.forEach(colab => {
-                dados[colab] = {};
-                let date = new Date(ano, 0, 1);
-                let endDate = new Date(ano, 11, 31);
-                while (date <= endDate) {
-                    const dateStr = date.toISOString().split('T')[0];
-                    dados[colab][dateStr] = '';
-                    date.setDate(date.getDate() + 1);
-                }
-            });
-
-            loadFromStorage(ano);
-            renderTimeline();
-            updateResumo();
-        }
-
-        function loadFromStorage(ano) {
+        // Carrega do Google Sheets
+        async function loadFromStorage(ano) {
             try {
-                const stored = localStorage.getItem(`mapaFerias_${ano}`);
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    colaboradores.forEach(colab => {
-                        if (parsed[colab]) {
-                            dados[colab] = {...dados[colab], ...parsed[colab]};
-                        }
+                const res = await fetch(`${API_BASE}?ano=${ano}`);
+                if (!res.ok) throw new Error('Falha ao carregar do Sheets');
+                const payload = await res.json();
+
+                const loadedDados = payload.dados || {};
+                const loadedFeriasAnt = payload.feriasAnteriores || {};
+
+                // Inicializa estrutura base com dias vazios
+                dados = {};
+                colaboradores.forEach(colab => {
+                    dados[colab] = {};
+                    let date = new Date(ano, 0, 1);
+                    let endDate = new Date(ano, 11, 31);
+                    while (date <= endDate) {
+                        const dateStr = date.toISOString().split('T')[0];
+                        dados[colab][dateStr] = '';
+                        date.setDate(date.getDate() + 1);
+                    }
+                });
+
+                // Sobrepõe com o que veio do backend
+                Object.keys(loadedDados).forEach(colab => {
+                    if (!dados[colab]) dados[colab] = {};
+                    Object.keys(loadedDados[colab]).forEach(dateStr => {
+                        dados[colab][dateStr] = loadedDados[colab][dateStr];
                     });
-                }
-                const ferAnt = localStorage.getItem(`feriasAnteriores_${ano}`);
-                if (ferAnt) {
-                    feriasAnteriores = JSON.parse(ferAnt);
-                } else {
-                    feriasAnteriores = {};
-                    colaboradores.forEach(colab => {
-                        feriasAnteriores[colab] = 0;
-                    });
-                }
+                });
+
+                // Férias anteriores
+                feriasAnteriores = {};
+                colaboradores.forEach(colab => {
+                    feriasAnteriores[colab] = loadedFeriasAnt[colab] || 0;
+                });
+
             } catch (e) {
-                console.log('No saved data');
+                console.error('Erro ao carregar do servidor, inicializando em branco', e);
+                dados = {};
+                colaboradores.forEach(colab => {
+                    dados[colab] = {};
+                    let date = new Date(ano, 0, 1);
+                    let endDate = new Date(ano, 11, 31);
+                    while (date <= endDate) {
+                        const dateStr = date.toISOString().split('T')[0];
+                        dados[colab][dateStr] = '';
+                        date.setDate(date.getDate() + 1);
+                    }
+                });
+                feriasAnteriores = {};
                 colaboradores.forEach(colab => {
                     feriasAnteriores[colab] = 0;
                 });
             }
         }
 
-        function saveToStorage(ano) {
-            localStorage.setItem(`mapaFerias_${ano}`, JSON.stringify(dados));
-            localStorage.setItem(`feriasAnteriores_${ano}`, JSON.stringify(feriasAnteriores));
-        }
-
-           function renderTimeline() {
-        const table = document.getElementById('timeline-table');
-        table.innerHTML = '';
-
-        const feriados = getFeriados(currentYear);
-
-        // Header (permanece igual)
-        const headerRow = document.createElement('tr');
-        const headerCell = document.createElement('th');
-        headerCell.textContent = 'Colaborador';
-        headerRow.appendChild(headerCell);
-
-        let date = new Date(currentYear, 0, 1);
-        let endDate = new Date(currentYear, 11, 31);
-
-        while (date <= endDate) {
-            const th = document.createElement('th');
-            const day = date.getDate();
-            const mes = date.toLocaleDateString('pt-PT', {month: 'short'}).toUpperCase();
-
-            const dayHeader = document.createElement('div');
-            dayHeader.className = 'day-header';
-            
-            const monthAbbr = document.createElement('div');
-            monthAbbr.className = 'month-abbr';
-            monthAbbr.textContent = mes;
-            
-            const dayNumber = document.createElement('div');
-            dayNumber.className = 'day-number';
-            dayNumber.textContent = day;
-
-            dayHeader.appendChild(monthAbbr);
-            dayHeader.appendChild(dayNumber);
-            th.appendChild(dayHeader);
-
-            th.title = date.toLocaleDateString('pt-PT');
-
-            const dateStr = date.toISOString().split('T')[0];
-            const feriado = feriados.find(f => f.data === dateStr);
-            if (feriado) {
-                th.title += `\n${feriado.emoji} ${feriado.nome}`;
-                th.className = feriado.classe;
-            } else if (date.getDay() === 0 || date.getDay() === 6) {
-                th.className = 'cell-weekend';
+        // Grava no Google Sheets
+        async function saveToStorage(ano) {
+            try {
+                await fetch(API_BASE, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        ano,
+                        dados,
+                        feriasAnteriores
+                    })
+                });
+            } catch (e) {
+                console.error('Erro ao gravar no servidor', e);
             }
-
-            headerRow.appendChild(th);
-            date.setDate(date.getDate() + 1);
         }
-        table.appendChild(headerRow);
 
-        // Dados - COM CORREÇÃO NO ONCLICK
-        colaboradores.forEach(colab => {
-            const row = document.createElement('tr');
+        async function initData(ano) {
+            currentYear = ano;
+            await loadFromStorage(ano);
+            renderTimeline();
+            updateResumo();
+        }
 
-            const nameCell = document.createElement('td');
-            nameCell.textContent = colab;
-            row.appendChild(nameCell);
+        function renderTimeline() {
+            const table = document.getElementById('timeline-table');
+            table.innerHTML = '';
 
-            date = new Date(currentYear, 0, 1);
+            const feriados = getFeriados(currentYear);
+
+            const headerRow = document.createElement('tr');
+            const headerCell = document.createElement('th');
+            headerCell.textContent = 'Colaborador';
+            headerRow.appendChild(headerCell);
+
+            let date = new Date(currentYear, 0, 1);
+            let endDate = new Date(currentYear, 11, 31);
+
             while (date <= endDate) {
-                const dateStr = date.toISOString().split('T')[0];
-                const cell = document.createElement('td');
-                const value = dados[colab][dateStr] || '';
+                const th = document.createElement('th');
+                const day = date.getDate();
+                const mes = date.toLocaleDateString('pt-PT', {month: 'short'}).toUpperCase();
 
-                if (value === 'F') cell.className = 'cell-f';
-                else if (value === 'M') cell.className = 'cell-m';
-                else if (value === 'T') cell.className = 'cell-t';
-                else {
-                    const feriado = feriados.find(f => f.data === dateStr);
-                    if (feriado) {
-                        cell.className = feriado.classe;
-                        cell.title = `${feriado.emoji} ${feriado.nome}`;
-                    } else if (date.getDay() === 0 || date.getDay() === 6) {
-                        cell.className = 'cell-weekend';
-                    } else {
-                        cell.className = 'cell-empty';
-                    }
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'day-header';
+                
+                const monthAbbr = document.createElement('div');
+                monthAbbr.className = 'month-abbr';
+                monthAbbr.textContent = mes;
+                
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = day;
+
+                dayHeader.appendChild(monthAbbr);
+                dayHeader.appendChild(dayNumber);
+                th.appendChild(dayHeader);
+
+                th.title = date.toLocaleDateString('pt-PT');
+
+                const dateStr = date.toISOString().split('T')[0];
+                const feriado = feriados.find(f => f.data === dateStr);
+                if (feriado) {
+                    th.title += `\n${feriado.emoji} ${feriado.nome}`;
+                    th.className = feriado.classe;
+                } else if (date.getDay() === 0 || date.getDay() === 6) {
+                    th.className = 'cell-weekend';
                 }
 
-                cell.textContent = value || '';
-                
-                // CORREÇÃO AQUI: Usa new Date(dateStr) para data precisa
-                cell.onclick = function() {
-                    const cellDate = new Date(dateStr + 'T00:00:00');
-                    currentCell = {colab, dateStr};
-                    const feriado = feriados.find(f => f.data === dateStr);
-                    const info = `📅 ${cellDate.toLocaleDateString('pt-PT')} (${getDayName(cellDate.getDay())})<br>Colaborador: ${colab}<br>Valor atual: ${value || 'vazio'}<br>${feriado ? feriado.emoji + ' FERIADO: ' + feriado.nome : ''}`;
-                    document.getElementById('modal-info').innerHTML = info;
-                    document.getElementById('modal').style.display = 'flex';
-                };
-
-                row.appendChild(cell);
+                headerRow.appendChild(th);
                 date.setDate(date.getDate() + 1);
             }
-            table.appendChild(row);
-        });
-    }
+            table.appendChild(headerRow);
+
+            colaboradores.forEach(colab => {
+                const row = document.createElement('tr');
+
+                const nameCell = document.createElement('td');
+                nameCell.textContent = colab;
+                row.appendChild(nameCell);
+
+                date = new Date(currentYear, 0, 1);
+                while (date <= endDate) {
+                    const dateStr = date.toISOString().split('T')[0];
+                    const cell = document.createElement('td');
+                    const value = dados[colab][dateStr] || '';
+
+                    if (value === 'F') cell.className = 'cell-f';
+                    else if (value === 'M') cell.className = 'cell-m';
+                    else if (value === 'T') cell.className = 'cell-t';
+                    else {
+                        const feriado = feriados.find(f => f.data === dateStr);
+                        if (feriado) {
+                            cell.className = feriado.classe;
+                            cell.title = `${feriado.emoji} ${feriado.nome}`;
+                        } else if (date.getDay() === 0 || date.getDay() === 6) {
+                            cell.className = 'cell-weekend';
+                        } else {
+                            cell.className = 'cell-empty';
+                        }
+                    }
+
+                    cell.textContent = value || '';
+                    
+                    cell.onclick = function() {
+                        const cellDate = new Date(dateStr + 'T00:00:00');
+                        currentCell = {colab, dateStr};
+                        const feriado = feriados.find(f => f.data === dateStr);
+                        const info = `📅 ${cellDate.toLocaleDateString('pt-PT')} (${getDayName(cellDate.getDay())})<br>Colaborador: ${colab}<br>Valor atual: ${value || 'vazio'}<br>${feriado ? feriado.emoji + ' FERIADO: ' + feriado.nome : ''}`;
+                        document.getElementById('modal-info').innerHTML = info;
+                        document.getElementById('modal').style.display = 'flex';
+                    };
+
+                    row.appendChild(cell);
+                    date.setDate(date.getDate() + 1);
+                }
+                table.appendChild(row);
+            });
+        }
 
         function updateResumo() {
             const table = document.getElementById('resumo-table');
@@ -953,12 +980,12 @@
             initData(ano);
         }
 
-        window.onload = function() {
-            initData(2026);
+        window.onload = async function() {
+            await initData(2026);
 
-            document.getElementById('year-select').addEventListener('change', function() {
+            document.getElementById('year-select').addEventListener('change', async function() {
                 const ano = parseInt(this.value);
-                initData(ano);
+                await initData(ano);
             });
 
             window.onclick = function(event) {
