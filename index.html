@@ -158,42 +158,46 @@
     </div>
   </div>
 
-  <!-- FIREBASE CONFIGURATION & SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<!-- FIREBASE CONFIGURATION & SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+// ...
+window.onSnapshot = onSnapshot; // Expõe para o script normal
 
-    // --- IMPORTANTE: SUBSTITUA COM SEUS DADOS DO FIREBASE ---
-    const firebaseConfig = {
-      apiKey: "SUA_API_KEY_AQUI",
-      authDomain: "SEU_PROJETO.firebaseapp.com",
-      projectId: "SEU_PROJECT_ID",
-      storageBucket: "SEU_PROJETO.appspot.com",
-      messagingSenderId: "SEU_MESSAGING_ID",
-      appId: "SEU_APP_ID"
-    };
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBxu7rZvOI2HrfiCImUwwPCu-IILyA5C20",
+  authDomain: "mapaferias-12a59.firebaseapp.com",
+  projectId: "mapaferias-12a59",
+  storageBucket: "mapaferias-12a59.firebasestorage.app",
+  messagingSenderId: "706339699788",
+  appId: "1:706339699788:web:cc98ae77f3b57a0b7608e9",
+  measurementId: "G-BE7LQQ9KF6"
+};
+  const app = initializeApp(firebaseConfig);
+  getAnalytics(app); // opcional
 
-    // Inicializar Firebase
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  const db = getFirestore(app);
 
-    // Variáveis Globais para acesso fora do módulo
-    window.db = db;
-    window.doc = doc;
-    window.getDoc = getDoc;
-    window.setDoc = setDoc;
-    
-    // Disparar o carregamento inicial após Firebase estar pronto
-    window.dispatchEvent(new Event('firebase-ready'));
-  </script>
+  // Expor para o script normal
+  window.db = db;
+  window.doc = doc;
+  window.getDoc = getDoc;
+  window.setDoc = setDoc;
 
-  <script>
-    const colaboradores = ["João Coelho", "Newton Filho", "Ricardo Nunes", "Wallace Lindemberg"];
-    let currentYear = 2026;
-    let dados = {};
-    let feriasAnteriores = {};
-    let currentCell = null;
-    let saveTimer = null;
+  window.dispatchEvent(new Event("firebase-ready"));
+</script>
+
+<!-- TEU APP (script normal) -->
+<script>
+  const colaboradores = ["João Coelho", "Newton Filho", "Ricardo Nunes", "Wallace Lindemberg"];
+  let currentYear = 2026;
+  let dados = {};
+  let feriasAnteriores = {};
+  let currentCell = null;
+  let saveTimer = null;
 
     // ---------------------------
     // Feriados Logic (Mantida Original)
@@ -285,17 +289,16 @@
         console.error('Erro ao carregar do Firebase:', e);
       }
     }
-
     function scheduleSave() {
       clearTimeout(saveTimer);
       saveTimer = setTimeout(async () => {
         try {
           if (!window.db) return;
           const docRef = window.doc(window.db, "ferias", currentYear.toString());
-          await window.setDoc(docRef, { 
-            dados: dados, 
-            feriasAnteriores: feriasAnteriores 
-          }, { merge: true });
+            await window.setDoc(docRef, {
+                dados: dados,
+                feriasAnteriores: feriasAnteriores
+                });
           console.log("Dados salvos no Firebase com sucesso!");
         } catch (e) {
           alert('Falha ao salvar no Firebase: ' + e.message);
@@ -303,16 +306,50 @@
       }, 1000); // Debounce aumentado para 1s para evitar muitas escritas
     }
 
-    async function initData(ano) {
-      currentYear = ano;
-      // Mostrar loading se necessário, aqui apenas renderizamos
-      const table = document.getElementById('timeline-table');
-      table.innerHTML = '<tr><td>Carregando dados...</td></tr>';
-      
-      await loadFromStorage(ano);
-      renderTimeline();
-      updateResumo();
+    // Substitui a tua função initData e loadFromStorage por esta lógica
+async function initData(ano) {
+  currentYear = ano;
+  const table = document.getElementById('timeline-table');
+  table.innerHTML = '<tr><td>A carregar dados em tempo real...</td></tr>';
+
+  // OUVINTE EM TEMPO REAL (Recomendado para Equipas)
+  // Sempre que alguém na equipa gravar, o teu ecrã atualiza sozinho
+  const docRef = window.doc(window.db, "ferias", ano.toString());
+  
+  window.onSnapshot(docRef, (docSnap) => {
+    if (docSnap.exists()) {
+       const payload = docSnap.data();
+       
+       // Atualiza a variável global 'dados'
+       // Nota: Isto funde os dados recebidos, garantindo que não perdes nada
+       const loadedDados = payload.dados || {};
+       dados = {}; // Limpa para garantir consistência
+       
+       // Reconstrói dados
+       Object.keys(loadedDados).forEach(colab => {
+         dados[colab] = loadedDados[colab];
+       });
+       
+       // Atualiza férias anteriores
+       const loadedFeriasAnt = payload.feriasAnteriores || {};
+       colaboradores.forEach(colab => {
+          if (loadedFeriasAnt[colab] !== undefined) {
+            feriasAnteriores[colab] = loadedFeriasAnt[colab];
+          }
+       });
+
+       // Renderiza tudo novamente com os dados frescos
+       renderTimeline();
+       updateResumo();
+    } else {
+       // Se o ano ainda não existir, inicia vazio
+       dados = {};
+       colaboradores.forEach(c => dados[c] = {});
+       renderTimeline();
+       updateResumo();
     }
+  });
+}
 
     // ---------------------------
     // Render Timeline (Mantida Original)
@@ -507,9 +544,8 @@
 
     // Init Logic
     window.addEventListener('firebase-ready', async () => {
-       await initData(2026);
+     await initData(2026);
     });
-
     window.onload = function() {
       // Setup UI listeners
       document.getElementById('year-select').addEventListener('change', async function() {
