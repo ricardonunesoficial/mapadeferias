@@ -498,6 +498,30 @@
                 height: 36px;
             }
         }
+        /* ... Todo o CSS anterior permanece inalterado ... */
+
+        /* NOVAS REGRAS para dia da semana embaixo */
+        .weekday-bottom {
+            font-size: 6px !important;
+            opacity: 0.85;
+            line-height: 1;
+            margin-top: 0.5px;
+            font-weight: 600;
+            text-shadow: 0 0.5px 1px rgba(0,0,0,0.4);
+        }
+
+        .timeline-table th {
+            height: 42px; /* Aumentado para acomodar dia da semana */
+        }
+
+        @media (max-width: 768px) {
+            .timeline-table th {
+                height: 38px;
+            }
+            .weekday-bottom {
+                font-size: 5.5px !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -811,6 +835,8 @@
             updateResumo();
         }
 
+        /* ... Todo o JavaScript anterior permanece igual até renderTimeline() ... */
+
         function renderTimeline() {
             const table = document.getElementById('timeline-table');
             table.innerHTML = '';
@@ -828,21 +854,29 @@
             while (date <= endDate) {
                 const th = document.createElement('th');
                 const day = date.getDate();
-                const mes = date.toLocaleDateString('pt-PT', {month: 'short'}).toUpperCase();
+                const mes = date.toLocaleDateString('pt-PT', { month: 'short' }).toUpperCase();
+                const weekday = getDayName(date.getDay()).substring(0, 3).toUpperCase(); // SEG, TER, QUA...
 
                 const dayHeader = document.createElement('div');
                 dayHeader.className = 'day-header';
-                
+
                 const monthAbbr = document.createElement('div');
                 monthAbbr.className = 'month-abbr';
                 monthAbbr.textContent = mes;
-                
+
                 const dayNumber = document.createElement('div');
                 dayNumber.className = 'day-number';
                 dayNumber.textContent = day;
 
+                // ✅ DIA DA SEMANA ABAIXO DO NÚMERO (NOVO)
+                const weekdayBottomDiv = document.createElement('div');
+                weekdayBottomDiv.className = 'weekday-bottom';
+                weekdayBottomDiv.textContent = weekday;
+
+                // Ordem: MÊS / NÚMERO / DIA DA SEMANA (embaixo)
                 dayHeader.appendChild(monthAbbr);
                 dayHeader.appendChild(dayNumber);
+                dayHeader.appendChild(weekdayBottomDiv);
                 th.appendChild(dayHeader);
 
                 th.title = date.toLocaleDateString('pt-PT');
@@ -860,7 +894,6 @@
                 date.setDate(date.getDate() + 1);
             }
             table.appendChild(headerRow);
-
             colaboradores.forEach(colab => {
                 const row = document.createElement('tr');
 
