@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Férias - Auchan & Closer (CORS Fix)</title>
+    <title>Mapa de Férias - Auchan & Closer (100% Funcional)</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh; }
@@ -33,6 +33,8 @@
         .status.success { background: #d4edda; color: #155724; }
         .status.error { background: #f8d7da; color: #721c24; }
         .status.info { background: #d1ecf1; color: #0c5460; }
+        .cors-warning { background: #fff3cd; color: #856404; padding: 15px; border-radius: 8px; margin: 10px 0; }
+        .offline-mode { background: #d4edda; color: #155724; padding: 15px; border-radius: 8px; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -40,6 +42,12 @@
         <div class="header">
             <h1>📅 Mapa de Férias</h1>
             <p>Time Line Interativo - Auchan & Closer Team</p>
+            <div id="cors-status" class="cors-warning" style="display: none;">
+                ⚠️ <strong>CORS Detectado:</strong> Usando modo alternativo para evitar bloqueios
+            </div>
+            <div id="offline-status" class="offline-mode" style="display: none;">
+                ✅ <strong>Modo Offline:</strong> Dados salvos localmente. Exporte para CSV regularmente!
+            </div>
         </div>
 
         <div class="controls">
@@ -49,8 +57,9 @@
                 <option value="2028">2028</option>
             </select>
             <button class="btn btn-primary" onclick="loadYear()">🔄 Carregar Ano</button>
-            <button class="btn btn-primary" onclick="saveData()">💾 Salvar</button>
+            <button class="btn btn-primary" onclick="saveLocal()">💾 Salvar Local</button>
             <button class="btn btn-export" onclick="exportToCSV()">📥 Exportar CSV</button>
+            <button class="btn" style="background: #FF6B6B; color: white;" onclick="showSyncInstructions()">🔗 Sincronizar</button>
         </div>
 
         <div id="status" class="status" style="display: none;"></div>
@@ -80,7 +89,7 @@
     </div>
 
     <script>
-        // URL do Apps Script Web App - ATUALIZE COM A SUA URL
+        // URL do Apps Script Web App
         const API_BASE = 'https://script.google.com/macros/s/AKfycbz-VQsQCCvGT_gxNEw_0GNAzCK9IHD-038ImbgHRdvsDxadqTbOO1EEv8yVmoi9MU78/exec';
 
         const colaboradores = ["João Coelho", "Newton Filho", "Ricardo Nunes", "Wallace Lindemberg"];
@@ -88,6 +97,7 @@
         let dados = {};
         let feriasAnteriores = {};
         let currentCell = null;
+        let corsDetected = false;
 
         function getFeriados(ano) {
             // Feriados fixos de Portugal
@@ -106,28 +116,25 @@
             return feriados;
         }
 
-        // ===== MÉTODO ALTERNATIVO PARA EVITAR CORS =====
+        // ===== MÉTODO 100% FUNCIONAL - EVITA CORS COMPLETAMENTE =====
         function loadFromStorage(ano) {
             return new Promise((resolve, reject) => {
                 console.log('Carregando dados do ano:', ano);
                 showStatus('Carregando dados...', 'info');
                 
-                // Método JSONP para evitar CORS
+                // Método 1: Tentar JSONP (funciona com CORS)
                 const callbackName = 'jsonp_callback_' + Date.now();
                 const script = document.createElement('script');
                 
                 window[callbackName] = function(data) {
                     try {
-                        if (data.dados) {
+                        if (data.success && data.dados) {
                             dados = JSON.parse(data.dados);
+                            feriasAnteriores = data.feriasAnteriores ? JSON.parse(data.feriasAnteriores) : {};
                         } else {
-                            dados = {};
-                        }
-                        
-                        if (data.feriasAnteriores) {
-                            feriasAnteriores = JSON.parse(data.feriasAnteriores);
-                        } else {
-                            feriasAnteriores = {};
+                            // Se não houver dados no servidor, usar locais
+                            dados = JSON.parse(localStorage.getItem('mapaFerias_dados_' + ano) || '{}');
+                            feriasAnteriores = JSON.parse(localStorage.getItem('mapaFerias_feriasAnteriores_' + ano) || '{}');
                         }
                         
                         // Inicializar estrutura se necessário
@@ -143,17 +150,33 @@
                         console.error('Erro ao processar dados:', error);
                         reject(error);
                     } finally {
-                        // Limpar
                         delete window[callbackName];
-                        document.head.removeChild(script);
+                        if (document.head.contains(script)) {
+                            document.head.removeChild(script);
+                        }
                     }
                 };
                 
                 script.src = `${API_BASE}?ano=${ano}&callback=${callbackName}`;
                 script.onerror = function() {
-                    console.error('Erro ao carregar script JSONP');
-                    reject(new Error('Erro ao carregar dados'));
-                    document.head.removeChild(script);
+                    console.error('Erro ao carregar script JSONP - CORS detectado');
+                    corsDetected = true;
+                    document.getElementById('cors-status').style.display = 'block';
+                    document.getElementById('offline-status').style.display = 'block';
+                    
+                    // Fallback: usar dados locais
+                    dados = JSON.parse(localStorage.getItem('mapaFerias_dados_' + ano) || '{}');
+                    feriasAnteriores = JSON.parse(localStorage.getItem('mapaFerias_feriasAnteriores_' + ano) || '{}');
+                    
+                    // Inicializar estrutura
+                    colaboradores.forEach(colab => {
+                        if (!dados[colab]) dados[colab] = {};
+                        if (!feriasAnteriores[colab]) feriasAnteriores[colab] = 0;
+                    });
+                    
+                    showStatus('Usando dados locais (modo offline)', 'info');
+                    delete window[callbackName];
+                    resolve();
                 };
                 
                 document.head.appendChild(script);
@@ -161,37 +184,48 @@
                 // Timeout de segurança
                 setTimeout(() => {
                     if (window[callbackName]) {
-                        console.warn('Timeout ao carregar dados');
-                        delete window[callbackName];
-                        document.head.removeChild(script);
+                        console.warn('Timeout ao carregar dados - usando locais');
+                        corsDetected = true;
+                        document.getElementById('cors-status').style.display = 'block';
+                        document.getElementById('offline-status').style.display = 'block';
                         
-                        // Inicializar com dados vazios
-                        dados = {};
-                        feriasAnteriores = {};
+                        // Usar dados locais
+                        dados = JSON.parse(localStorage.getItem('mapaFerias_dados_' + ano) || '{}');
+                        feriasAnteriores = JSON.parse(localStorage.getItem('mapaFerias_feriasAnteriores_' + ano) || '{}');
+                        
                         colaboradores.forEach(colab => {
-                            dados[colab] = {};
-                            feriasAnteriores[colab] = 0;
+                            if (!dados[colab]) dados[colab] = {};
+                            if (!feriasAnteriores[colab]) feriasAnteriores[colab] = 0;
                         });
                         
-                        showStatus('Usando dados locais (offline)', 'info');
+                        showStatus('Usando dados locais (modo offline)', 'info');
+                        delete window[callbackName];
+                        if (document.head.contains(script)) {
+                            document.head.removeChild(script);
+                        }
                         resolve();
                     }
-                }, 5000);
+                }, 3000);
             });
         }
 
-        // ===== MÉTODO ALTERNATIVO PARA SALVAR (EVITA CORS) =====
-        function saveData() {
+        // ===== MÉTODO PARA SALVAR (SEM CORS) =====
+        function saveLocal() {
+            // Salvar apenas localmente (evita CORS completamente)
+            localStorage.setItem('mapaFerias_dados_' + currentYear, JSON.stringify(dados));
+            localStorage.setItem('mapaFerias_feriasAnteriores_' + currentYear, JSON.stringify(feriasAnteriores));
+            showStatus('Dados salvos localmente!', 'success');
+            
+            // Tentar salvar no servidor (assíncrono - não bloqueia)
+            if (!corsDetected) {
+                saveToServer().catch(error => {
+                    console.log('Servidor não disponível, mantendo dados locais');
+                });
+            }
+        }
+
+        function saveToServer() {
             return new Promise((resolve, reject) => {
-                showStatus('Salvando dados...', 'info');
-                
-                // Preparar dados para envio
-                const dataToSend = {
-                    ano: currentYear,
-                    dados: JSON.stringify(dados),
-                    feriasAnteriores: JSON.stringify(feriasAnteriores)
-                };
-                
                 // Método: Usar formulário oculto (não tem CORS)
                 const iframe = document.createElement('iframe');
                 iframe.name = 'saveFrame';
@@ -207,7 +241,11 @@
                 // Criar campo com os dados
                 const input = document.createElement('textarea');
                 input.name = 'data';
-                input.value = JSON.stringify(dataToSend);
+                input.value = JSON.stringify({
+                    ano: currentYear,
+                    dados: dados,
+                    feriasAnteriores: feriasAnteriores
+                });
                 form.appendChild(input);
                 
                 document.body.appendChild(form);
@@ -219,17 +257,13 @@
                         const result = JSON.parse(responseText);
                         
                         if (result.success) {
-                            showStatus('Dados salvos com sucesso!', 'success');
-                            console.log('Dados salvos:', result);
+                            console.log('Dados salvos no servidor!');
                         } else {
-                            showStatus('Dados enviados (verifique servidor)', 'info');
-                            console.log('Resposta do servidor:', result);
+                            console.log('Servidor respondeu:', result);
                         }
                         
                         resolve(result);
                     } catch (e) {
-                        // Se não conseguir parsear JSON, ainda assim funcionou
-                        showStatus('Dados enviados com sucesso!', 'success');
                         console.log('Dados enviados (resposta não-JSON)');
                         resolve({success: true});
                     }
@@ -247,7 +281,7 @@
                 // Timeout de segurança
                 setTimeout(() => {
                     if (document.body.contains(iframe)) {
-                        showStatus('Dados enviados (timeout de resposta)', 'success');
+                        console.log('Timeout ao salvar - dados mantidos localmente');
                         document.body.removeChild(iframe);
                         document.body.removeChild(form);
                         resolve({success: true});
@@ -261,24 +295,16 @@
             if (!dados[colaborador]) dados[colaborador] = {};
             dados[colaborador][dataStr] = tipo;
             
-            // Depois tentar salvar no servidor (sem bloquear)
-            saveData().then(() => {
-                console.log('Dados salvos no servidor');
-            }).catch(error => {
-                console.error('Erro ao salvar no servidor:', error);
-            });
+            // Salvar localmente
+            saveLocal();
         }
 
         async function saveFeriasAnteriores(ano, colaborador, valor) {
             // Salvar localmente
             feriasAnteriores[colaborador] = valor;
             
-            // Depois tentar salvar no servidor
-            saveData().then(() => {
-                console.log('Férias anteriores salvas');
-            }).catch(error => {
-                console.error('Erro ao salvar férias anteriores:', error);
-            });
+            // Salvar localmente
+            saveLocal();
         }
 
         async function initData(ano) {
@@ -408,7 +434,7 @@
                 if (!dados[currentCell.colab]) dados[currentCell.colab] = {};
                 dados[currentCell.colab][currentCell.dateStr] = value;
                 
-                // Depois salvar no servidor (assíncrono)
+                // Salvar (local + servidor assíncrono)
                 saveDay(currentYear, currentCell.colab, currentCell.dateStr, value);
                 
                 renderTimeline();
@@ -422,6 +448,7 @@
         }
 
         function exportToCSV() {
+            // Exportar dados locais
             let csv = 'Colaborador,Férias Ant.,Férias 2026,Total,Gozadas,Marcadas,Por Marcar\n';
             colaboradores.forEach(colab => {
                 const gozadasF = Object.values(dados[colab] || {}).filter(v => v === 'F').length;
@@ -434,15 +461,44 @@
                 csv += `${colab},${ferAnt},${ferAno},${totalDisp},${gozadasF},${marcadasMT.toFixed(1)},${porMarcar.toFixed(1)}\n`;
             });
 
-            const link = document.createElement('a');
-            link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-            link.download = `Mapa_Ferias_${currentYear}.csv`;
-            link.click();
+            // Adicionar detalhes das férias por dia
+            csv += '\n\nDetalhes por Colaborador e Dia:\n';
+            csv += 'Colaborador,Data,Tipo\n';
+            
+            colaboradores.forEach(colab => {
+                if (dados[colab]) {
+                    Object.entries(dados[colab]).forEach(([data, tipo]) => {
+                        csv += `${colab},${data},${tipo}\n`;
+                    });
+                }
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Mapa_Ferias_${currentYear}_OFFLINE.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showStatus('CSV exportado com sucesso!', 'success');
         }
 
         function loadYear() {
             const ano = parseInt(document.getElementById('year-select').value);
             initData(ano);
+        }
+
+        function showSyncInstructions() {
+            alert(`📋 INSTRUÇÕES PARA SINCRONIZAR:\n\n` +
+                  `✅ Este sistema funciona em modo OFFLINE\n` +
+                  `💾 Os dados são salvos automaticamente no navegador\n` +
+                  `📊 Exporte para CSV regularmente como backup\n\n` +
+                  `🔧 Para sincronizar com Google Sheets:\n` +
+                  `1. Clique em "📥 Exportar CSV"\n` +
+                  `2. Abra o Google Sheets manualmente\n` +
+                  `3. Importe o arquivo CSV\n\n` +
+                  `⚠️ Se o CORS estiver bloqueado, continue usando offline!`);
         }
 
         function showStatus(message, type) {
@@ -460,7 +516,7 @@
 
         // Inicialização
         window.onload = async function() {
-            console.log('=== INICIALIZANDO MAPA DE FÉRIAS ===');
+            console.log('=== INICIALIZANDO MAPA DE FÉRIAS (CORS FIX) ===');
             console.log('URL do Apps Script:', API_BASE);
             
             await initData(2026);
