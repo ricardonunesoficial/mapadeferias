@@ -19,7 +19,7 @@ Mapa interativo de férias para planeamento da equipa de Data (**João Coelho**,
 | **F** | Dia completo de férias | 🟢 Verde escuro |
 | **M** | Meio-dia manhã | 🟩 Verde claro |
 | **T** | Meio-dia tarde | 🟡 Amarelo |
-| 🔴🟣🟢 | Feriados nacionais | 🔴 Vermelho |
+| 🔴 Feriados nacionais | 🔴 Vermelho |
 | 📅 | Fins-de-semana | ⬜ Cinza claro |
 | (vazio) | Dia normal disponível | ⚪ Branco |
 
@@ -62,6 +62,7 @@ Por Marcar = Total - Gozadas - Marcadas
 | **Dados** | `dados[colab][YYYY-MM-DD]` + `feriasAnteriores[colab]` |
 | **Storage** | `localStorage` (`mapaFerias_${ano}`) |
 | **Responsive** | Desktop + Mobile |
+| **Database** | Google Firebase |
 | **Customizações** | Editar `colaboradores[]`, `ferAno = 22` |
 
 **Correção aplicada**: Data no modal usa `new Date(dateStr)` para precisão one-click.
