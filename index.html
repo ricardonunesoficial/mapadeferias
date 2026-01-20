@@ -8,7 +8,6 @@
   <style>
     /* 
        ALL CSS REMAINS EXACTLY THE SAME AS YOUR ORIGINAL CODE 
-       (Collapsed here for brevity, paste your original CSS style block here)
     */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh; }
@@ -162,20 +161,21 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
-// ...
-window.onSnapshot = onSnapshot; // Expõe para o script normal
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+  
+  // Expõe onSnapshot para o script normal
+  window.onSnapshot = onSnapshot; 
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBxu7rZvOI2HrfiCImUwwPCu-IILyA5C20",
-  authDomain: "mapaferias-12a59.firebaseapp.com",
-  projectId: "mapaferias-12a59",
-  storageBucket: "mapaferias-12a59.firebasestorage.app",
-  messagingSenderId: "706339699788",
-  appId: "1:706339699788:web:cc98ae77f3b57a0b7608e9",
-  measurementId: "G-BE7LQQ9KF6"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyBxu7rZvOI2HrfiCImUwwPCu-IILyA5C20",
+    authDomain: "mapaferias-12a59.firebaseapp.com",
+    projectId: "mapaferias-12a59",
+    storageBucket: "mapaferias-12a59.firebasestorage.app",
+    messagingSenderId: "706339699788",
+    appId: "1:706339699788:web:cc98ae77f3b57a0b7608e9",
+    measurementId: "G-BE7LQQ9KF6"
+  };
+
   const app = initializeApp(firebaseConfig);
   getAnalytics(app); // opcional
 
@@ -200,95 +200,71 @@ const firebaseConfig = {
   let saveTimer = null;
 
     // ---------------------------
-    // Feriados Logic (Mantida Original)
+    // Feriados Logic (ATUALIZADO E AUTOMATIZADO)
     // ---------------------------
     function getFeriados(ano) {
-      if (ano === 2026) {
-        return [
-          {data: '2026-01-01', nome: 'Ano Novo', classe: 'cell-feriado-ano-novo', emoji: '🔴'},
-          {data: '2026-04-25', nome: 'Dia da Liberdade', classe: 'cell-feriado-liberdade', emoji: '🔴'},
-          {data: '2026-05-01', nome: 'Dia do Trabalhador', classe: 'cell-feriado-trabalhador', emoji: '🔴'},
-          {data: '2026-06-10', nome: 'Dia de Portugal', classe: 'cell-feriado-portugal', emoji: '🔴'},
-          {data: '2026-08-15', nome: 'Assunção de Nossa Senhora', classe: 'cell-feriado-assuncao', emoji: '🔴'},
-          {data: '2026-10-05', nome: 'Implantação da República', classe: 'cell-feriado-republica', emoji: '🔴'},
-          {data: '2026-11-01', nome: 'Dia de Todos os Santos', classe: 'cell-feriado-todos-santos', emoji: '🔴'},
-          {data: '2026-12-01', nome: 'Restauração da Independência', classe: 'cell-feriado-restauracao', emoji: '🔴'},
-          {data: '2026-12-08', nome: 'Imaculada Conceição', classe: 'cell-feriado-imaculada', emoji: '🔴'},
-          {data: '2026-12-25', nome: 'Natal', classe: 'cell-feriado-natal', emoji: '🔴'},
-          {data: '2026-04-03', nome: 'Sexta-feira Santa', classe: 'cell-feriado-sexta-santa', emoji: '🔴'},
-          {data: '2026-04-05', nome: 'Domingo de Páscoa', classe: 'cell-feriado-pascoa', emoji: '🔴'},
-          {data: '2026-06-04', nome: 'Corpus Christi', classe: 'cell-feriado-corpus-christi', emoji: '🔴'}
-        ];
-      }
-
+      // 1. Feriados Fixos (Nacionais e Municipais comuns)
       const fixos = [
-        {data: `${ano}-01-01`, nome: 'Ano Novo'},
-        {data: `${ano}-04-25`, nome: 'Liberdade'},
-        {data: `${ano}-05-01`, nome: 'Trabalhador'},
-        {data: `${ano}-06-10`, nome: 'Portugal'},
-        {data: `${ano}-08-15`, nome: 'Assunção'},
-        {data: `${ano}-10-05`, nome: 'República'},
-        {data: `${ano}-11-01`, nome: 'Todos os Santos'},
-        {data: `${ano}-12-01`, nome: 'Restauração'},
-        {data: `${ano}-12-08`, nome: 'Imaculada'},
-        {data: `${ano}-12-25`, nome: 'Natal'}
+        { data: `${ano}-01-01`, nome: 'Ano Novo', emoji: '🎉' },
+        { data: `${ano}-04-25`, nome: 'Dia da Liberdade', emoji: '🔴' },
+        { data: `${ano}-05-01`, nome: 'Dia do Trabalhador', emoji: '🔴' },
+        { data: `${ano}-06-10`, nome: 'Dia de Portugal', emoji: '🇵🇹' },
+        { data: `${ano}-06-13`, nome: 'Santo António', emoji: '🐟' }, 
+        { data: `${ano}-06-24`, nome: 'São João', emoji: '🎈' },    
+        { data: `${ano}-06-29`, nome: 'São Pedro', emoji: '🔑' },   
+        { data: `${ano}-08-15`, nome: 'Assunção de Nossa Senhora', emoji: '🔴' },
+        { data: `${ano}-10-05`, nome: 'Implantação da República', emoji: '🔴' },
+        { data: `${ano}-11-01`, nome: 'Dia de Todos os Santos', emoji: '🔴' },
+        { data: `${ano}-12-01`, nome: 'Restauração da Independência', emoji: '🔴' },
+        { data: `${ano}-12-08`, nome: 'Imaculada Conceição', emoji: '🔴' },
+        { data: `${ano}-12-25`, nome: 'Natal', emoji: '🎄' }
       ];
 
-      const pascoa = new Date(ano, 3, 22 + Math.floor(((5.5 + ano) % 19 * 11 + 3) % 30));
-      const sextaSanta = new Date(pascoa); sextaSanta.setDate(pascoa.getDate() - 2);
-      const corpoDeus = new Date(pascoa); corpoDeus.setDate(pascoa.getDate() + 60);
+      // 2. Cálculo da Páscoa (Algoritmo de Meeus/Jones/Butcher)
+      const a = ano % 19;
+      const b = Math.floor(ano / 100);
+      const c = ano % 100;
+      const d = Math.floor(b / 4);
+      const e = b % 4;
+      const f = Math.floor((b + 8) / 25);
+      const g = Math.floor((b - f + 1) / 3);
+      const h = (19 * a + b - d - g + 15) % 30;
+      const i = Math.floor(c / 4);
+      const k = c % 4;
+      const l = (32 + 2 * e + 2 * i - h - k) % 7;
+      const m = Math.floor((a + 11 * h + 22 * l) / 451);
+      const mesPascoa = Math.floor((h + l - 7 * m + 114) / 31);
+      const diaPascoa = ((h + l - 7 * m + 114) % 31) + 1;
 
-      fixos.push(
-        {data: sextaSanta.toISOString().split('T')[0], nome: 'Sexta Santa'},
-        {data: pascoa.toISOString().split('T')[0], nome: 'Páscoa'},
-        {data: corpoDeus.toISOString().split('T')[0], nome: 'Corpo de Deus'}
-      );
+      const dataPascoa = new Date(ano, mesPascoa - 1, diaPascoa);
 
-      return fixos.map(f => ({...f, classe: 'cell-holiday', emoji: '🔴'}));
+      // 3. Calcular Feriados Móveis
+      const dataSextaSanta = new Date(dataPascoa);
+      dataSextaSanta.setDate(dataPascoa.getDate() - 2);
+
+      const dataCorpoDeus = new Date(dataPascoa);
+      dataCorpoDeus.setDate(dataPascoa.getDate() + 60);
+
+      const moveis = [
+        { data: dataSextaSanta.toISOString().split('T')[0], nome: 'Sexta-feira Santa', emoji: '✝️' },
+        { data: dataPascoa.toISOString().split('T')[0], nome: 'Domingo de Páscoa', emoji: '🐰' },
+        { data: dataCorpoDeus.toISOString().split('T')[0], nome: 'Corpo de Deus', emoji: '🔴' }
+      ];
+
+      // 4. Retornar formatado com a classe genérica 'cell-holiday'
+      return [...fixos, ...moveis].map(f => {
+         // Normaliza o nome para criar uma classe CSS compatível
+         const slug = f.nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ /g, '-');
+         return {
+           ...f,
+           classe: `cell-holiday cell-feriado-${slug}`
+         };
+      });
     }
 
     // ---------------------------
     // Storage (FIREBASE Backend)
     // ---------------------------
-    async function loadFromStorage(ano) {
-      // Inicializar vazio por padrão
-      dados = {};
-      feriasAnteriores = {};
-      colaboradores.forEach(colab => {
-        dados[colab] = {};
-        feriasAnteriores[colab] = 0;
-      });
-
-      try {
-        if (!window.db) throw new Error("Firebase não inicializado");
-        
-        const docRef = window.doc(window.db, "ferias", ano.toString());
-        const docSnap = await window.getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const payload = docSnap.data();
-          const loadedDados = payload.dados || {};
-          const loadedFeriasAnt = payload.feriasAnteriores || {};
-
-          // Merge dos dados
-          Object.keys(loadedDados).forEach(colab => {
-            if (!dados[colab]) dados[colab] = {};
-            Object.keys(loadedDados[colab]).forEach(dateStr => {
-              dados[colab][dateStr] = loadedDados[colab][dateStr];
-            });
-          });
-
-          // Merge ferias anteriores
-          colaboradores.forEach(colab => {
-             if (loadedFeriasAnt[colab] !== undefined) {
-               feriasAnteriores[colab] = loadedFeriasAnt[colab];
-             }
-          });
-        }
-      } catch (e) {
-        console.error('Erro ao carregar do Firebase:', e);
-      }
-    }
     function scheduleSave() {
       clearTimeout(saveTimer);
       saveTimer = setTimeout(async () => {
@@ -303,53 +279,42 @@ const firebaseConfig = {
         } catch (e) {
           alert('Falha ao salvar no Firebase: ' + e.message);
         }
-      }, 1000); // Debounce aumentado para 1s para evitar muitas escritas
+      }, 1000); 
     }
 
-    // Substitui a tua função initData e loadFromStorage por esta lógica
-async function initData(ano) {
-  currentYear = ano;
-  const table = document.getElementById('timeline-table');
-  table.innerHTML = '<tr><td>A carregar dados em tempo real...</td></tr>';
+    async function initData(ano) {
+      currentYear = ano;
+      const table = document.getElementById('timeline-table');
+      table.innerHTML = '<tr><td>A carregar dados em tempo real...</td></tr>';
 
-  // OUVINTE EM TEMPO REAL (Recomendado para Equipas)
-  // Sempre que alguém na equipa gravar, o teu ecrã atualiza sozinho
-  const docRef = window.doc(window.db, "ferias", ano.toString());
-  
-  window.onSnapshot(docRef, (docSnap) => {
-    if (docSnap.exists()) {
-       const payload = docSnap.data();
-       
-       // Atualiza a variável global 'dados'
-       // Nota: Isto funde os dados recebidos, garantindo que não perdes nada
-       const loadedDados = payload.dados || {};
-       dados = {}; // Limpa para garantir consistência
-       
-       // Reconstrói dados
-       Object.keys(loadedDados).forEach(colab => {
-         dados[colab] = loadedDados[colab];
-       });
-       
-       // Atualiza férias anteriores
-       const loadedFeriasAnt = payload.feriasAnteriores || {};
-       colaboradores.forEach(colab => {
-          if (loadedFeriasAnt[colab] !== undefined) {
-            feriasAnteriores[colab] = loadedFeriasAnt[colab];
-          }
-       });
-
-       // Renderiza tudo novamente com os dados frescos
-       renderTimeline();
-       updateResumo();
-    } else {
-       // Se o ano ainda não existir, inicia vazio
-       dados = {};
-       colaboradores.forEach(c => dados[c] = {});
-       renderTimeline();
-       updateResumo();
+      // OUVINTE EM TEMPO REAL (Recomendado para Equipas)
+      const docRef = window.doc(window.db, "ferias", ano.toString());
+      
+      window.onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+           const payload = docSnap.data();
+           const loadedDados = payload.dados || {};
+           dados = {}; 
+           Object.keys(loadedDados).forEach(colab => {
+             dados[colab] = loadedDados[colab];
+           });
+           
+           const loadedFeriasAnt = payload.feriasAnteriores || {};
+           colaboradores.forEach(colab => {
+              if (loadedFeriasAnt[colab] !== undefined) {
+                feriasAnteriores[colab] = loadedFeriasAnt[colab];
+              }
+           });
+           renderTimeline();
+           updateResumo();
+        } else {
+           dados = {};
+           colaboradores.forEach(c => dados[c] = {});
+           renderTimeline();
+           updateResumo();
+        }
+      });
     }
-  });
-}
 
     // ---------------------------
     // Render Timeline (Mantida Original)
