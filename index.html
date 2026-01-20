@@ -200,18 +200,17 @@
   let saveTimer = null;
 
     // ---------------------------
-    // Feriados Logic (ATUALIZADO E AUTOMATIZADO)
+    // Feriados Logic (ATUALIZADO)
     // ---------------------------
     function getFeriados(ano) {
-      // 1. Feriados Fixos (Nacionais e Municipais comuns)
+      // 1. Feriados Fixos (Nacionais + Santo António)
       const fixos = [
         { data: `${ano}-01-01`, nome: 'Ano Novo', emoji: '🎉' },
         { data: `${ano}-04-25`, nome: 'Dia da Liberdade', emoji: '🔴' },
         { data: `${ano}-05-01`, nome: 'Dia do Trabalhador', emoji: '🔴' },
         { data: `${ano}-06-10`, nome: 'Dia de Portugal', emoji: '🇵🇹' },
         { data: `${ano}-06-13`, nome: 'Santo António', emoji: '🐟' }, 
-       // { data: `${ano}-06-24`, nome: 'São João', emoji: '🎈' },    
-       // { data: `${ano}-06-29`, nome: 'São Pedro', emoji: '🔑' },   
+        // São João e São Pedro removidos conforme pedido
         { data: `${ano}-08-15`, nome: 'Assunção de Nossa Senhora', emoji: '🔴' },
         { data: `${ano}-10-05`, nome: 'Implantação da República', emoji: '🔴' },
         { data: `${ano}-11-01`, nome: 'Dia de Todos os Santos', emoji: '🔴' },
@@ -253,7 +252,6 @@
 
       // 4. Retornar formatado com a classe genérica 'cell-holiday'
       return [...fixos, ...moveis].map(f => {
-         // Normaliza o nome para criar uma classe CSS compatível
          const slug = f.nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ /g, '-');
          return {
            ...f,
