@@ -450,48 +450,58 @@
       });
     }
 
-
     // ---------------------------
-    // FUNÇÃO CSV ATUALIZADA (COM BOM)
+    // FUNÇÃO CSV ATUALIZADA (COM DIAS EXPORTADOS)
     // ---------------------------
     function exportToCSV() {
-      // 1. Criar o cabeçalho
-      let csv = 'Colaborador,Férias Ant.,Férias ' + currentYear + ',Total,Gozadas F,Marcadas M+T,Por Marcar\n';
+      // 1. Criar o cabeçalho (Adicionada coluna "Dias Detalhados")
+      let csv = 'Colaborador,Férias Ant.,Férias ' + currentYear + ',Total,Gozadas F,Marcadas M+T,Por Marcar,Dias Detalhados\n';
       
       // 2. Preencher as linhas
       colaboradores.forEach(colab => {
-        const values = Object.values(dados[colab] || {});
+        const valoresColab = dados[colab] || {};
+        const values = Object.values(valoresColab);
+        
+        // Contagens
         const gozadasF = values.filter(v => v === 'F').length;
         const marcadasMT = values.filter(v => v === 'M' || v === 'T').length * 0.5;
         const ferAnt = feriasAnteriores[colab] || 0;
         const ferAno = 22;
         const totalDisp = ferAnt + ferAno;
         const porMarcar = totalDisp - gozadasF - marcadasMT;
-        
-        csv += `${colab},${ferAnt},${ferAno},${totalDisp},${gozadasF},${marcadasMT.toFixed(1)},${porMarcar.toFixed(1)}\n`;
+
+        // 3. Obter a lista de dias marcados
+        // Filtramos apenas as chaves (datas) que têm valor 'F', 'M' ou 'T'
+        const diasMarcados = Object.keys(valoresColab)
+          .filter(dateStr => ['F', 'M', 'T'].includes(valoresColab[dateStr]))
+          .sort() // Ordenar cronologicamente
+          .map(dateStr => {
+             const tipo = valoresColab[dateStr]; // F, M ou T
+             // Formatar data para ser mais legível (DD/MM) ou manter ISO (AAAA-MM-DD)
+             // Vamos usar AAAA-MM-DD (Tipo) para clareza
+             return `${dateStr} (${tipo})`;
+          })
+          .join('; '); // Separador dentro da mesma célula do Excel
+
+        // Adicionar linha ao CSV (com aspas na lista de dias para evitar quebra de colunas)
+        csv += `${colab},${ferAnt},${ferAno},${totalDisp},${gozadasF},${marcadasMT.toFixed(1)},${porMarcar.toFixed(1)},"${diasMarcados}"\n`;
       });
 
-
-      // 3. Adicionar o BOM (\uFEFF) para forçar UTF-8 no Excel
+      // 4. Adicionar o BOM (\uFEFF) para forçar UTF-8 no Excel
       const bom = "\uFEFF";
       const csvContent = bom + csv;
 
-
-      // 4. Criar o Blob com encoding correto
+      // 5. Criar o Blob e Download
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      
-      // 5. Download
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', `Mapa_Ferias_${currentYear}.csv`);
+      link.setAttribute('download', `Mapa_Ferias_${currentYear}_Detalhado.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
-
-
     function updateResumo() {
       const table = document.getElementById('resumo-table');
       table.innerHTML = '';
