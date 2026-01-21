@@ -62,8 +62,9 @@
     .cell-feriado-pascoa { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
     .cell-feriado-corpus-christi { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
     
-    /* NOVO FERIADO OEIRAS */
+    /* FERIADO OEIRAS */
     .cell-feriado-oeiras { background: linear-gradient(135deg, #6A5ACD, #483D8B) !important; color: white !important; }
+
 
     .cell-holiday { background: linear-gradient(135deg, #DC143C, #B22222) !important; color: white !important; }
     .cell-weekend { background: linear-gradient(135deg, #f0f0f0, #e0e0e0) !important; color: #666 !important; }
@@ -96,6 +97,7 @@
     @media (max-width: 768px) { .controls { flex-direction: column; align-items: stretch; } .stats { margin-left: 0; justify-content: center; } .modal-buttons { grid-template-columns: 1fr; } .legend-grid { grid-template-columns: 1fr; } .timeline-table th { padding: 6px 3px; height: 38px; } .weekday-bottom { font-size: 5.5px !important; } }
   </style>
 </head>
+
 
 <body>
   <div class="container">
@@ -197,7 +199,6 @@
   window.dispatchEvent(new Event("firebase-ready"));
 </script>
 
-<!-- ... (CABEÇALHO E CSS MANTÊM-SE IGUAIS) ... -->
 
 <!-- TEU APP (script normal) -->
 <script>
@@ -208,8 +209,9 @@
   let currentCell = null;
   let saveTimer = null;
 
+
     // -----------------------------------------------------
-    // FUNÇÃO CORRETORA DE DATAS (NOVA)
+    // FUNÇÃO CORRETORA DE DATAS
     // Garante que "2026-06-07" é mesmo dia 7, não dia 6
     // -----------------------------------------------------
     function formatDateLocal(date) {
@@ -218,6 +220,7 @@
       const day = String(date.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
     }
+
 
     // ---------------------------
     // Feriados Logic
@@ -239,6 +242,7 @@
         { data: `${ano}-12-25`, nome: 'Natal', emoji: '🎄' }
       ];
 
+
       // 2. Cálculo da Páscoa
       const a = ano % 19;
       const b = Math.floor(ano / 100);
@@ -255,21 +259,26 @@
       const mesPascoa = Math.floor((h + l - 7 * m + 114) / 31);
       const diaPascoa = ((h + l - 7 * m + 114) % 31) + 1;
 
+
       const dataPascoa = new Date(ano, mesPascoa - 1, diaPascoa);
+
 
       // 3. Feriados Móveis
       const dataSextaSanta = new Date(dataPascoa);
       dataSextaSanta.setDate(dataPascoa.getDate() - 2);
 
+
       const dataCorpoDeus = new Date(dataPascoa);
       dataCorpoDeus.setDate(dataPascoa.getDate() + 60);
 
-      // AQUI: Usamos a nova função formatDateLocal em vez de toISOString
+
+      // Usamos a nova função formatDateLocal
       const moveis = [
         { data: formatDateLocal(dataSextaSanta), nome: 'Sexta-feira Santa', emoji: '✝️' },
         { data: formatDateLocal(dataPascoa), nome: 'Domingo de Páscoa', emoji: '🐰' },
         { data: formatDateLocal(dataCorpoDeus), nome: 'Corpo de Deus', emoji: '🔴' }
       ];
+
 
       return [...fixos, ...moveis].map(f => {
          let cssClass = 'cell-holiday';
@@ -282,6 +291,7 @@
          return { ...f, classe: cssClass };
       });
     }
+
 
     // ... (STORAGE LOGIC MANTÉM-SE IGUAL) ...
     function scheduleSave() {
@@ -296,10 +306,12 @@
       }, 1000); 
     }
 
+
     async function initData(ano) {
       currentYear = ano;
       const table = document.getElementById('timeline-table');
       table.innerHTML = '<tr><td>A carregar...</td></tr>';
+
 
       const docRef = window.doc(window.db, "ferias", ano.toString());
       window.onSnapshot(docRef, (docSnap) => {
@@ -322,6 +334,7 @@
       });
     }
 
+
     // ---------------------------
     // Render Timeline (CORRIGIDO)
     // ---------------------------
@@ -329,20 +342,24 @@
       const table = document.getElementById('timeline-table');
       table.innerHTML = '';
 
+
       const feriados = getFeriados(currentYear);
       const headerRow = document.createElement('tr');
       const headerCell = document.createElement('th');
       headerCell.textContent = 'Colaborador';
       headerRow.appendChild(headerCell);
 
+
       let date = new Date(currentYear, 0, 1);
       const endDate = new Date(currentYear, 11, 31);
+
 
       while (date <= endDate) {
         const th = document.createElement('th');
         const day = date.getDate();
         const mes = date.toLocaleDateString('pt-PT', { month: 'short' }).toUpperCase();
         const weekday = getDayName(date.getDay()).substring(0, 3).toUpperCase();
+
 
         const dayHeader = document.createElement('div');
         dayHeader.className = 'day-header';
@@ -365,8 +382,10 @@
         th.appendChild(dayHeader);
         th.title = date.toLocaleDateString('pt-PT');
 
-        // CORREÇÃO AQUI: Usar formatDateLocal
+
+        // CORREÇÃO: Usar formatDateLocal
         const dateStr = formatDateLocal(date);
+
 
         const feriado = feriados.find(f => f.data === dateStr);
         if (feriado) {
@@ -380,19 +399,22 @@
       }
       table.appendChild(headerRow);
 
+
       colaboradores.forEach(colab => {
         const row = document.createElement('tr');
         const nameCell = document.createElement('td');
         nameCell.textContent = colab;
         row.appendChild(nameCell);
 
+
         let d = new Date(currentYear, 0, 1);
         while (d <= endDate) {
-          // CORREÇÃO AQUI: Usar formatDateLocal
+          // CORREÇÃO: Usar formatDateLocal
           const dateStr = formatDateLocal(d);
           
           const cell = document.createElement('td');
           const value = (dados[colab] && dados[colab][dateStr]) ? dados[colab][dateStr] : '';
+
 
           if (value === 'F') cell.className = 'cell-f';
           else if (value === 'M') cell.className = 'cell-m';
@@ -409,6 +431,7 @@
             }
           }
           cell.textContent = value || '';
+
 
           cell.onclick = function() {
             const cellDate = new Date(dateStr + 'T00:00:00');
@@ -427,7 +450,48 @@
       });
     }
 
-    // ... (MANTÉM UPDATE RESUMO E RESTANTES FUNÇÕES IGUAIS) ...
+
+    // ---------------------------
+    // FUNÇÃO CSV ATUALIZADA (COM BOM)
+    // ---------------------------
+    function exportToCSV() {
+      // 1. Criar o cabeçalho
+      let csv = 'Colaborador,Férias Ant.,Férias ' + currentYear + ',Total,Gozadas F,Marcadas M+T,Por Marcar\n';
+      
+      // 2. Preencher as linhas
+      colaboradores.forEach(colab => {
+        const values = Object.values(dados[colab] || {});
+        const gozadasF = values.filter(v => v === 'F').length;
+        const marcadasMT = values.filter(v => v === 'M' || v === 'T').length * 0.5;
+        const ferAnt = feriasAnteriores[colab] || 0;
+        const ferAno = 22;
+        const totalDisp = ferAnt + ferAno;
+        const porMarcar = totalDisp - gozadasF - marcadasMT;
+        
+        csv += `${colab},${ferAnt},${ferAno},${totalDisp},${gozadasF},${marcadasMT.toFixed(1)},${porMarcar.toFixed(1)}\n`;
+      });
+
+
+      // 3. Adicionar o BOM (\uFEFF) para forçar UTF-8 no Excel
+      const bom = "\uFEFF";
+      const csvContent = bom + csv;
+
+
+      // 4. Criar o Blob com encoding correto
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      
+      // 5. Download
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `Mapa_Ferias_${currentYear}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+
     function updateResumo() {
       const table = document.getElementById('resumo-table');
       table.innerHTML = '';
@@ -440,6 +504,7 @@
       table.appendChild(headerRow);
       let totalMarcados = 0;
 
+
       colaboradores.forEach(colab => {
         const values = Object.values(dados[colab] || {});
         const gozadasF = values.filter(v => v === 'F').length;
@@ -449,6 +514,7 @@
         const totalDisp = ferAnt + ferAno;
         const porMarcar = totalDisp - gozadasF - marcadasMT;
         totalMarcados += gozadasF + marcadasMT;
+
 
         const row = document.createElement('tr');
         const cells = [colab, ferAnt, ferAno, totalDisp, gozadasF, marcadasMT.toFixed(1), porMarcar.toFixed(1)];
@@ -472,7 +538,6 @@
       });
       document.getElementById('total-marcados').textContent = totalMarcados.toFixed(1);
     }
-
     function setCell(value) {
       if (!currentCell) return;
       if (!dados[currentCell.colab]) dados[currentCell.colab] = {};
@@ -492,9 +557,10 @@
       renderTimeline();
       updateResumo();
     }
-    function exportToCSV() { /* Mantém igual */ }
+    
     function getDayName(day) { return ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'][day]; }
     function loadYear() { const ano = parseInt(document.getElementById('year-select').value, 10); initData(ano); }
+
 
     window.addEventListener('firebase-ready', async () => { await initData(2026); });
     window.onload = function() {
@@ -502,6 +568,5 @@
       window.onclick = function(e) { if (e.target === document.getElementById('modal')) closeModal(); };
     };
 </script>
-
 </body>
 </html>
