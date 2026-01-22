@@ -208,6 +208,9 @@
   let feriasAnteriores = {};
   let currentCell = null;
   let saveTimer = null;
+  let feriadosCache = {};
+  let currentUnsubscribe = null;
+  let valoresCache = {};
 
 
     // -----------------------------------------------------
@@ -223,9 +226,14 @@
 
 
     // ---------------------------
-    // Feriados Logic
+    // Feriados Logic com Cache
     // ---------------------------
     function getFeriados(ano) {
+      // Cache: Se já calculamos para este ano, retorna do cache
+      if (feriadosCache[ano]) {
+        return feriadosCache[ano];
+      }
+
       // 1. Feriados Fixos
       const fixos = [
         { data: `${ano}-01-01`, nome: 'Ano Novo', emoji: '🎉' },
@@ -241,7 +249,6 @@
         { data: `${ano}-12-08`, nome: 'Imaculada Conceição', emoji: '🔴' },
         { data: `${ano}-12-25`, nome: 'Natal', emoji: '🎄' }
       ];
-
 
       // 2. Cálculo da Páscoa
       const a = ano % 19;
@@ -259,28 +266,22 @@
       const mesPascoa = Math.floor((h + l - 7 * m + 114) / 31);
       const diaPascoa = ((h + l - 7 * m + 114) % 31) + 1;
 
-
       const dataPascoa = new Date(ano, mesPascoa - 1, diaPascoa);
-
 
       // 3. Feriados Móveis
       const dataSextaSanta = new Date(dataPascoa);
       dataSextaSanta.setDate(dataPascoa.getDate() - 2);
 
-
       const dataCorpoDeus = new Date(dataPascoa);
       dataCorpoDeus.setDate(dataPascoa.getDate() + 60);
 
-
-      // Usamos a nova função formatDateLocal
       const moveis = [
         { data: formatDateLocal(dataSextaSanta), nome: 'Sexta-feira Santa', emoji: '✝️' },
         { data: formatDateLocal(dataPascoa), nome: 'Domingo de Páscoa', emoji: '🐰' },
         { data: formatDateLocal(dataCorpoDeus), nome: 'Corpo de Deus', emoji: '🔴' }
       ];
 
-
-      return [...fixos, ...moveis].map(f => {
+      const resultado = [...fixos, ...moveis].map(f => {
          let cssClass = 'cell-holiday';
          if (f.nome.includes('Oeiras')) {
             cssClass = 'cell-feriado-oeiras';
@@ -290,6 +291,10 @@
          }
          return { ...f, classe: cssClass };
       });
+
+      // Guardar em cache
+      feriadosCache[ano] = resultado;
+      return resultado;
     }
 
 
@@ -308,13 +313,18 @@
 
 
     async function initData(ano) {
+      // Remover listener anterior se existir
+      if (currentUnsubscribe) {
+        currentUnsubscribe();
+        currentUnsubscribe = null;
+      }
+
       currentYear = ano;
       const table = document.getElementById('timeline-table');
       table.innerHTML = '<tr><td>A carregar...</td></tr>';
 
-
       const docRef = window.doc(window.db, "ferias", ano.toString());
-      window.onSnapshot(docRef, (docSnap) => {
+      currentUnsubscribe = window.onSnapshot(docRef, (docSnap) => {
         if (docSnap.exists()) {
            const payload = docSnap.data();
            const loadedDados = payload.dados || {};
@@ -329,6 +339,7 @@
            dados = {};
            colaboradores.forEach(c => dados[c] = {});
         }
+        valoresCache = {}; // Limpar cache de valores
         renderTimeline();
         updateResumo();
       });
@@ -336,30 +347,43 @@
 
 
     // ---------------------------
-    // Render Timeline (CORRIGIDO)
+    // ---------------------------
+    // Render Timeline (OTIMIZADO COM DOCUMENTFRAGMENT)
     // ---------------------------
     function renderTimeline() {
       const table = document.getElementById('timeline-table');
       table.innerHTML = '';
 
-
       const feriados = getFeriados(currentYear);
+      
+      // Criar mapa de feriados para busca rápida O(1)
+      const feriadoMap = new Map();
+      feriados.forEach(f => feriadoMap.set(f.data, f));
+
+      // Usar DocumentFragment para evitar reflows
+      const fragment = document.createDocumentFragment();
+
       const headerRow = document.createElement('tr');
       const headerCell = document.createElement('th');
       headerCell.textContent = 'Colaborador';
       headerRow.appendChild(headerCell);
 
-
       let date = new Date(currentYear, 0, 1);
       const endDate = new Date(currentYear, 11, 31);
+      const headerDates = [];
 
-
+      // Construir datas uma vez
       while (date <= endDate) {
-        const th = document.createElement('th');
-        const day = date.getDate();
-        const mes = date.toLocaleDateString('pt-PT', { month: 'short' }).toUpperCase();
-        const weekday = getDayName(date.getDay()).substring(0, 3).toUpperCase();
+        headerDates.push(new Date(date));
+        date.setDate(date.getDate() + 1);
+      }
 
+      // Renderizar header com datas pré-calculadas
+      headerDates.forEach(d => {
+        const th = document.createElement('th');
+        const day = d.getDate();
+        const mes = d.toLocaleDateString('pt-PT', { month: 'short' }).toUpperCase();
+        const weekday = getDayName(d.getDay()).substring(0, 3).toUpperCase();
 
         const dayHeader = document.createElement('div');
         dayHeader.className = 'day-header';
@@ -380,47 +404,40 @@
         dayHeader.appendChild(weekdayBottomDiv);
         
         th.appendChild(dayHeader);
-        th.title = date.toLocaleDateString('pt-PT');
+        th.title = d.toLocaleDateString('pt-PT');
 
-
-        // CORREÇÃO: Usar formatDateLocal
-        const dateStr = formatDateLocal(date);
-
-
-        const feriado = feriados.find(f => f.data === dateStr);
+        const dateStr = formatDateLocal(d);
+        const feriado = feriadoMap.get(dateStr);
+        
         if (feriado) {
           th.title += `\n${feriado.emoji} ${feriado.nome}`;
           th.className = feriado.classe;
-        } else if (date.getDay() === 0 || date.getDay() === 6) {
+        } else if (d.getDay() === 0 || d.getDay() === 6) {
           th.className = 'cell-weekend';
         }
         headerRow.appendChild(th);
-        date.setDate(date.getDate() + 1);
-      }
-      table.appendChild(headerRow);
+      });
+      fragment.appendChild(headerRow);
 
-
+      // Renderizar linhas de colaboradores
       colaboradores.forEach(colab => {
         const row = document.createElement('tr');
         const nameCell = document.createElement('td');
         nameCell.textContent = colab;
         row.appendChild(nameCell);
 
+        const colabData = dados[colab] || {};
 
-        let d = new Date(currentYear, 0, 1);
-        while (d <= endDate) {
-          // CORREÇÃO: Usar formatDateLocal
+        headerDates.forEach(d => {
           const dateStr = formatDateLocal(d);
-          
           const cell = document.createElement('td');
-          const value = (dados[colab] && dados[colab][dateStr]) ? dados[colab][dateStr] : '';
-
+          const value = colabData[dateStr] || '';
 
           if (value === 'F') cell.className = 'cell-f';
           else if (value === 'M') cell.className = 'cell-m';
           else if (value === 'T') cell.className = 'cell-t';
           else {
-            const feriado = feriados.find(f => f.data === dateStr);
+            const feriado = feriadoMap.get(dateStr);
             if (feriado) {
               cell.className = feriado.classe;
               cell.title = `${feriado.emoji} ${feriado.nome}`;
@@ -430,13 +447,12 @@
               cell.className = 'cell-empty';
             }
           }
-          cell.textContent = value || '';
-
+          cell.textContent = value;
 
           cell.onclick = function() {
             const cellDate = new Date(dateStr + 'T00:00:00');
             currentCell = { colab, dateStr };
-            const feriado = feriados.find(f => f.data === dateStr);
+            const feriado = feriadoMap.get(dateStr);
             const info = `📅 ${cellDate.toLocaleDateString('pt-PT')} (${getDayName(cellDate.getDay())})<br>` +
               `Colaborador: ${colab}<br>Valor atual: ${value || 'vazio'}<br>` +
               `${feriado ? (feriado.emoji + ' FERIADO: ' + feriado.nome) : ''}`;
@@ -444,54 +460,59 @@
             document.getElementById('modal').style.display = 'flex';
           };
           row.appendChild(cell);
-          d.setDate(d.getDate() + 1);
-        }
-        table.appendChild(row);
+        });
+        fragment.appendChild(row);
       });
+
+      // Adicionar tudo de uma vez (um único reflow)
+      table.appendChild(fragment);
     }
 
     // ---------------------------
-    // FUNÇÃO CSV ATUALIZADA (COM DIAS EXPORTADOS)
+    // FUNÇÃO CSV ATUALIZADA (OTIMIZADA)
     // ---------------------------
     function exportToCSV() {
-      // 1. Criar o cabeçalho (Adicionada coluna "Dias Detalhados")
-      let csv = 'Colaborador,Férias Ant.,Férias ' + currentYear + ',Total,Gozadas F,Marcadas M+T,Por Marcar,Dias Detalhados\n';
+      // 1. Usar array em vez de string concatenation (mais rápido)
+      const csvLines = ['Colaborador,Férias Ant.,Férias ' + currentYear + ',Total,Gozadas F,Marcadas M+T,Por Marcar,Dias Detalhados'];
       
-      // 2. Preencher as linhas
+      // 2. Preencher as linhas com loop único
       colaboradores.forEach(colab => {
         const valoresColab = dados[colab] || {};
-        const values = Object.values(valoresColab);
         
-        // Contagens
-        const gozadasF = values.filter(v => v === 'F').length;
-        const marcadasMT = values.filter(v => v === 'M' || v === 'T').length * 0.5;
+        // Contagens com loop único
+        let gozadasF = 0, marcadasMT = 0;
+        const diasMarcadosArray = [];
+        
+        Object.entries(valoresColab).forEach(([dateStr, tipo]) => {
+          if (tipo === 'F') {
+            gozadasF++;
+            diasMarcadosArray.push({ date: dateStr, tipo });
+          } else if (tipo === 'M' || tipo === 'T') {
+            marcadasMT += 0.5;
+            diasMarcadosArray.push({ date: dateStr, tipo });
+          }
+        });
+
         const ferAnt = feriasAnteriores[colab] || 0;
         const ferAno = 22;
         const totalDisp = ferAnt + ferAno;
         const porMarcar = totalDisp - gozadasF - marcadasMT;
 
-        // 3. Obter a lista de dias marcados
-        // Filtramos apenas as chaves (datas) que têm valor 'F', 'M' ou 'T'
-        const diasMarcados = Object.keys(valoresColab)
-          .filter(dateStr => ['F', 'M', 'T'].includes(valoresColab[dateStr]))
-          .sort() // Ordenar cronologicamente
-          .map(dateStr => {
-             const tipo = valoresColab[dateStr]; // F, M ou T
-             // Formatar data para ser mais legível (DD/MM) ou manter ISO (AAAA-MM-DD)
-             // Vamos usar AAAA-MM-DD (Tipo) para clareza
-             return `${dateStr} (${tipo})`;
-          })
-          .join('; '); // Separador dentro da mesma célula do Excel
+        // Ordenar dias marcados
+        const diasMarcados = diasMarcadosArray
+          .sort((a, b) => a.date.localeCompare(b.date))
+          .map(d => `${d.date} (${d.tipo})`)
+          .join('; ');
 
-        // Adicionar linha ao CSV (com aspas na lista de dias para evitar quebra de colunas)
-        csv += `${colab},${ferAnt},${ferAno},${totalDisp},${gozadasF},${marcadasMT.toFixed(1)},${porMarcar.toFixed(1)},"${diasMarcados}"\n`;
+        // Adicionar linha ao array
+        csvLines.push(`${colab},${ferAnt},${ferAno},${totalDisp},${gozadasF},${marcadasMT.toFixed(1)},${porMarcar.toFixed(1)},"${diasMarcados}"`);
       });
 
-      // 4. Adicionar o BOM (\uFEFF) para forçar UTF-8 no Excel
+      // 3. Juntar todas as linhas e adicionar BOM
       const bom = "\uFEFF";
-      const csvContent = bom + csv;
+      const csvContent = bom + csvLines.join('\n');
 
-      // 5. Criar o Blob e Download
+      // 4. Criar o Blob e Download
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
@@ -505,26 +526,43 @@
     function updateResumo() {
       const table = document.getElementById('resumo-table');
       table.innerHTML = '';
+      const fragment = document.createDocumentFragment();
+      
       const headerRow = document.createElement('tr');
       ['Colaborador', 'Férias Ant.', 'Férias ' + currentYear, 'Total Disp.', 'Gozadas (F)', 'Marcadas (M+T)', 'Por Marcar'].forEach(header => {
         const th = document.createElement('th');
         th.innerHTML = header;
         headerRow.appendChild(th);
       });
-      table.appendChild(headerRow);
+      fragment.appendChild(headerRow);
       let totalMarcados = 0;
 
-
       colaboradores.forEach(colab => {
-        const values = Object.values(dados[colab] || {});
-        const gozadasF = values.filter(v => v === 'F').length;
-        const marcadasMT = values.filter(v => v === 'M' || v === 'T').length * 0.5;
+        const colabData = dados[colab] || {};
+        
+        // Cache dos valores se não existir
+        const cacheKey = colab + ':' + currentYear;
+        let gozadasF, marcadasMT;
+        
+        if (valoresCache[cacheKey]) {
+          ({ gozadasF, marcadasMT } = valoresCache[cacheKey]);
+        } else {
+          // Contar F e M/T iterando uma única vez
+          let f = 0, mt = 0;
+          Object.values(colabData).forEach(v => {
+            if (v === 'F') f++;
+            else if (v === 'M' || v === 'T') mt++;
+          });
+          gozadasF = f;
+          marcadasMT = mt * 0.5;
+          valoresCache[cacheKey] = { gozadasF, marcadasMT };
+        }
+
         const ferAnt = feriasAnteriores[colab] || 0;
         const ferAno = 22;
         const totalDisp = ferAnt + ferAno;
         const porMarcar = totalDisp - gozadasF - marcadasMT;
         totalMarcados += gozadasF + marcadasMT;
-
 
         const row = document.createElement('tr');
         const cells = [colab, ferAnt, ferAno, totalDisp, gozadasF, marcadasMT.toFixed(1), porMarcar.toFixed(1)];
@@ -537,6 +575,7 @@
               const novoValor = prompt('Férias Anteriores:', ferAnt);
               if (novoValor !== null && !isNaN(novoValor)) {
                 feriasAnteriores[colab] = parseFloat(novoValor);
+                valoresCache = {}; // Limpar cache
                 scheduleSave();
                 updateResumo();
               }
@@ -544,8 +583,10 @@
           } else if (idx >= 3) td.className = 'cell-calc';
           row.appendChild(td);
         });
-        table.appendChild(row);
+        fragment.appendChild(row);
       });
+      
+      table.appendChild(fragment);
       document.getElementById('total-marcados').textContent = totalMarcados.toFixed(1);
     }
     function setCell(value) {
