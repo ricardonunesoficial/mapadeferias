@@ -4,7 +4,8 @@ firebase.json
 firebaserc
 firebase-debug.log
 firebase-debug.*.log
-
+firebase_*.json
+firebase-*.json
 # Firebase CLI
 firebase-debug.log
 firebase-*.log
